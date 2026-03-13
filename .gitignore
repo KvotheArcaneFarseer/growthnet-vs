@@ -1,0 +1,77 @@
+# Bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+*.log
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+pip-wheel-metadata/
+
+# Packaging and build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets and local config
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets/
+**/secrets/
+credentials/
+**/credentials/
+
+# ML outputs and large artifacts (do not commit)
+# Prefer keeping outputs on Rivanna under code_runs/
+runs/
+code_runs/
+outputs/
+checkpoints/
+wandb/
+mlruns/
+lightning_logs/
+tensorboard/
+tb_logs/
+
+# Data (do not commit raw or curated datasets to GitHub)
+data_raw/
+dataset_pipeline/
+dataset_curated/
+data/
+datasets/
+**/data/
+**/datasets/
+
+# Temporary scratch
+tmp/
+temp/
+**/tmp/
+**/temp/

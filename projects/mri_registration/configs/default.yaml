@@ -1,0 +1,82 @@
+# ============================================================================
+# MRI Registration Pipeline Configuration
+# ============================================================================
+# Required fields (validated by shared.config_loader)
+dataset_id: "uva_vs_cohort"
+seed: 42
+output_dir: "code_runs/mri_registration"
+
+# ── Paths (user must set these per environment) ──
+input_csv: null           # path to meta_df_entropy.csv
+template_dir: null        # path to MNI template folder
+output_base_dir: null     # root for coregistered output (e.g., /standard/gam_ai_group/dataset_curated/uva_vs_notreat)
+
+# ── HD-BET specific ──
+data_dir: null            # directory containing raw_studies/, hd_input/, hd_output/
+hd_bet_path: null         # absolute path to hd-bet binary
+
+# ── Processing ──
+threads: 8                # threads per worker for ITK/ANTs
+parallel_workers: 8       # number of patients in parallel (total CPU = parallel_workers * threads)
+test_mode: false          # skip I/O, validate workflow only
+preprocessing_version: "6.8"
+
+# ── Incremental mode ──
+# skip_all | process_new | smart | force_reprocess
+incremental_mode: "smart"
+reuse_transformations: true
+prefer_coregistered: false
+
+# ── Study filtering ──
+allowed_study_types:
+  - "t2_thin"
+  - "t1+_thin"
+  - "t1+_thick_ax"
+  - "t1+_thick_cor"
+max_patients: null        # set to integer for testing on subset
+
+# ── Resampling ──
+target_spacing: [0.5, 0.5, 0.5]  # isotropic voxel spacing in mm
+
+# ── Histogram matching ──
+enable_histogram_matching: false
+histogram_matching_bins: 1024
+histogram_matching_points: 256
+
+# ── Head masking / background removal ──
+enable_head_masking: false
+head_mask_dilation_mm: 25.0
+head_mask_min_coverage: 5.0
+
+# ── Template Z-axis cropping ──
+template_z_crop: [0, 140]  # set to null to disable
+
+# ── Center alignment per registration level ──
+center_alignment_config:
+  pt_anchor_to_template: true
+  tp_anchor_to_pt_anchor: false
+  study_to_tp_anchor: false
+
+# ── Anchor selection ──
+anchor_selection_metric:
+  column: "file_size_mb"
+  ascending: false
+
+# ── Registration methods (advanced — usually leave as default) ──
+# registration_config:
+#   pt_anchor_to_template:
+#     initializer: "DenseRigid"
+#     main: "Similarity"
+#   tp_anchor_to_pt_anchor:
+#     initializer: "DenseRigid"
+#     main: "Similarity"
+#   study_to_tp_anchor:
+#     method: "DenseRigid"
+
+# ── HD-BET settings ──
+device: "cuda"
+disable_tta: true
+save_only_mask: true
+clean_hd_input_first: true
+batch_sizes: [50, 10, 1]
+retry_cooldown_secs: 30

@@ -20,7 +20,9 @@ from monai.transforms.utils import rescale_array
 def create_synthetic_dataset(
         num_patients: int = 30,
         lam: float = 3.5,
-        off_axis_growth_p: float = 0.25
+        off_axis_growth_p: float = 0.25,
+        geometry_mode: Literal["ellipsoid", "lollipop"] = "ellipsoid",
+        canal_axis: Literal["a", "b", "c"] = "c",
 ) -> list[dict]:
     """
     Create a synthetic dataset of 3D medical images with temporal progression for multiple patients.
@@ -35,6 +37,9 @@ def create_synthetic_dataset(
             of time points per patient
         off_axis_growth_p : float : Probability (0.0-1.0) that growth will occur in axes 
             perpendicular to the primary growth direction
+        geometry_mode : Literal["ellipsoid", "lollipop"] : Geometry generation mode.
+            "ellipsoid" preserves legacy behavior.
+        canal_axis : Literal["a", "b", "c"] : Internal canal axis used by "lollipop" mode.
     
     Returns:
         data_dicts : list[dict] : List of patient data dictionaries, where each dictionary contains:
@@ -86,6 +91,8 @@ def create_synthetic_dataset(
                 growth=growth,
                 growth_direction=growth_direction,
                 off_axis_growth_p=off_axis_growth_p,
+                geometry_mode=geometry_mode,
+                canal_axis=canal_axis,
             )
         
         # Store the data
@@ -115,6 +122,8 @@ def create_synthetic_time_3d(
         growth: Literal["decreasing", "fat-tailed", "steady", "stable"] = "decreasing",
         growth_direction: Literal["a", "b", "c"] = "a",
         off_axis_growth_p: float = 0.5,
+        geometry_mode: Literal["ellipsoid", "lollipop"] = "ellipsoid",
+        canal_axis: Literal["a", "b", "c"] = "c",
         random_state: np.random.RandomState | None = None
 ) -> list[tuple[np.ndarray, np.ndarray]]:
     """
@@ -147,6 +156,9 @@ def create_synthetic_time_3d(
             (a, b, or c correspond to the three ellipsoid semi-axes)
         off_axis_growth_p : float : Probability (0.0-1.0) that perpendicular axes also grow 
             when the primary axis grows
+        geometry_mode : Literal["ellipsoid", "lollipop"] : Geometry generation mode.
+            "ellipsoid" preserves legacy behavior.
+        canal_axis : Literal["a", "b", "c"] : Internal canal axis used by "lollipop" mode.
         random_state : np.random.RandomState | None : Random state for reproducible random 
             number generation, None uses global numpy random state
     
@@ -165,6 +177,10 @@ def create_synthetic_time_3d(
     min_size = min(height, width, depth)
     if min_size <= 2 * rad_max:
         raise ValueError(f"the minimal size {min_size} of the image should be larger than `2 * rad_max` 2 * {rad_max}.")
+    if geometry_mode not in ("ellipsoid", "lollipop"):
+        raise ValueError(f"`geometry_mode` {geometry_mode} should be one of `ellipsoid`, `lollipop`.")
+    if canal_axis not in ("a", "b", "c"):
+        raise ValueError(f"`canal_axis` {canal_axis} should be one of `a`, `b`, `c`.")
     
     # Create the list of images and labels
     images = []
@@ -241,11 +257,52 @@ def create_synthetic_time_3d(
         spx_rotate = rot_matrix_inv[1, 0] * spy + rot_matrix_inv[1, 1] * spx + rot_matrix_inv[1, 2] * spz
         spz_rotate = rot_matrix_inv[2, 0] * spy + rot_matrix_inv[2, 1] * spx + rot_matrix_inv[2, 2] * spz
 
-        # Create the ellipsoid
-        ellipsoid = ((spx_rotate ** 2) / (a ** 2)  + (spy_rotate ** 2) / (b ** 2) + (spz_rotate ** 2) / (c ** 2)) <= 1
+        if geometry_mode == "ellipsoid":
+            # Legacy geometry path (unchanged): single rotated ellipsoid.
+            geometry_mask = ((spx_rotate ** 2) / (a ** 2)  + (spy_rotate ** 2) / (b ** 2) + (spz_rotate ** 2) / (c ** 2)) <= 1
+        else:
+            # 1) Canal-axis alignment in the rotated local frame.
+            axis_lengths = {"a": a, "b": b, "c": c}
+            if canal_axis == "a":
+                canal_coord, perp1_coord, perp2_coord = spx_rotate, spy_rotate, spz_rotate
+                perp1_len, perp2_len = b, c
+            elif canal_axis == "b":
+                canal_coord, perp1_coord, perp2_coord = spy_rotate, spx_rotate, spz_rotate
+                perp1_len, perp2_len = a, c
+            else:
+                canal_coord, perp1_coord, perp2_coord = spz_rotate, spx_rotate, spy_rotate
+                perp1_len, perp2_len = a, b
+            canal_axis_len = axis_lengths[canal_axis]
+
+            # 2) Origin / early bulb.
+            canal_radius = max(1.0, 0.45 * min(perp1_len, perp2_len))
+            origin_radius = max(1.0, 0.9 * canal_radius)
+            origin_bulb = (perp1_coord ** 2 + perp2_coord ** 2 + canal_coord ** 2) <= (origin_radius ** 2)
+
+            # 3) Intracanalicular cylinder.
+            canal_length = max(canal_radius, 0.8 * canal_axis_len)
+            intracanalicular_cylinder = (
+                (canal_coord >= 0)
+                & (canal_coord <= canal_length)
+                & ((perp1_coord ** 2 + perp2_coord ** 2) <= (canal_radius ** 2))
+            )
+
+            # 4) Extracanalicular CPA mass.
+            cpa_center = canal_length
+            cpa_axis = max(canal_radius * 1.25, float(canal_axis_len))
+            cpa_perp1 = max(canal_radius * 1.15, float(perp1_len))
+            cpa_perp2 = max(canal_radius * 1.15, float(perp2_len))
+            cpa_mass = (
+                ((canal_coord - cpa_center) ** 2) / (cpa_axis ** 2)
+                + (perp1_coord ** 2) / (cpa_perp1 ** 2)
+                + (perp2_coord ** 2) / (cpa_perp2 ** 2)
+            ) <= 1
+
+            # 5) Final union of components.
+            geometry_mask = origin_bulb | intracanalicular_cylinder | cpa_mass
 
         # Fill-in the circle
-        image[ellipsoid] = rs.random() * 0.5 + 0.5
+        image[geometry_mask] = rs.random() * 0.5 + 0.5
     
         # Get the label mask
         label = np.ceil(image).astype(np.int32, copy=False)

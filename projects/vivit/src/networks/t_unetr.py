@@ -33,7 +33,7 @@ from monai.networks.blocks.unetr_block import (
     UnetrBasicBlock, UnetrPrUpBlock, UnetrUpBlock
 )
 from monai.utils import ensure_tuple_rep
-from typing import Sequence, Literal
+from typing import Sequence, Literal, Optional, Union
 from src.networks.temporal_encoders import (
     MLPEncoder, 
     BiasedPositionalEncoder,
@@ -97,7 +97,7 @@ class TemporalTransformerBlock(nn.Module):
     def forward(
             self,
             x: torch.Tensor,
-            attn_mask: torch.Tensor | None
+            attn_mask: Optional[torch.Tensor]
     ) -> torch.Tensor:
         """
         Forward pass through the temporal transformer block.
@@ -144,7 +144,7 @@ class TemporalSpatialEmbedding(nn.Module):
     def __init__(
             self,
             in_channels: int,
-            img_size: Sequence[int] | int,
+            img_size: Union[Sequence[int], int],
             patch_size: Sequence[int],
             num_layers: int,
             embed_dim: int,
@@ -153,11 +153,11 @@ class TemporalSpatialEmbedding(nn.Module):
             temporal_depth: int,
             temporal_heads: int = 8,
             use_temporal_mlp: bool = True,
-            use_temporal_encoder: Literal["mlp", "position", "dual"] | None = None,
+            use_temporal_encoder: Optional[Literal["mlp", "position", "dual"]] = None,
             proj_type: str = "conv",
             dropout: float = 0.0,
             spatial_dims: int = 3,
-            vit_from_pretrained: str | None = None
+            vit_from_pretrained: Optional[str] = None
     ) -> None:
         """
         Initialize the temporal-spatial embedding network.
@@ -231,7 +231,7 @@ class TemporalSpatialEmbedding(nn.Module):
             self,
             x: torch.Tensor,
             seq_lengths: torch.Tensor,
-            dates: torch.Tensor | None = None,
+            dates: Optional[torch.Tensor] = None,
     ) -> tuple[torch.Tensor, list[torch.Tensor]]:
         """
         Forward pass for sequential 3D volumes with spatial and temporal encoding.
@@ -392,8 +392,8 @@ class TemporalUNETR(nn.Module):
             self,
             in_channels: int,
             out_channels: int,
-            img_size: Sequence[int] | int,
-            embedding_path: str | None = None,
+            img_size: Union[Sequence[int], int],
+            embedding_path: Optional[str] = None,
             patch_size: int = 16,
             feature_size: int = 16,
             embed_dim: int = 768,
@@ -401,15 +401,15 @@ class TemporalUNETR(nn.Module):
             num_heads: int = 12,
             temporal_depth: int = 8,
             use_temporal_mlp: bool = True,
-            use_temporal_encoder: Literal["mlp", "position", "dual"] | None = None,
+            use_temporal_encoder: Optional[Literal["mlp", "position", "dual"]] = None,
             proj_type: str = "conv",
-            norm_name: tuple | str = "instance",
+            norm_name: Union[tuple, str] = "instance",
             conv_block: bool = True,
             res_block: bool = True,
             dropout: float = 0.0,
             spatial_dims: int = 3,
             aggregation_method: Literal["last", "mean", "max", "cat"] = "last",
-            vit_from_pretrained: str | None = None
+            vit_from_pretrained: Optional[str] = None
     ) -> None:
         """
         Initialize the Temporal UNETR model.
@@ -618,7 +618,7 @@ class TemporalUNETR(nn.Module):
             self,
             x: torch.Tensor,
             seq_lengths: torch.Tensor,
-            dates: torch.Tensor | None = None
+            dates: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
         """
         Forward pass through the Temporal UNETR architecture.

@@ -23,7 +23,7 @@ Dependencies:
 
 import torch
 import math
-from typing import Sequence
+from typing import Sequence, Union
 from torch import nn
 from monai.networks.layers import Conv
 from monai.networks.nets.vit import ViT
@@ -62,8 +62,8 @@ class ViTAutoEnc(nn.Module):
     def __init__(
             self,
             in_channels: int,
-            img_size: Sequence[int] | int,
-            patch_size: Sequence[int] | int,
+            img_size: Union[Sequence[int], int],
+            patch_size: Union[Sequence[int], int],
             out_channels: int = 1,
             deconv_chns: int = 16,
             hidden_size: int = 768,

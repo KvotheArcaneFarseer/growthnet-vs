@@ -32,7 +32,7 @@ from accelerate import Accelerator
 from monai.data import DataLoader, Dataset
 from monai.utils import set_determinism
 from sklearn.model_selection import KFold
-from typing import Any
+from typing import Any, Optional
 from itertools import product
 from src.data.transforms import build_train_transform, build_eval_transform
 from src.data.samplers import LengthShuffledBucketBatchSampler
@@ -213,8 +213,8 @@ def grid_search(
         target_spacing: list[int, int, int],
         img_size: list[int, int, int],
         pos_neg: list[int, int],
-        accelerator: Accelerator | None = None,
-        file_path: str | None = None
+        accelerator: Optional[Accelerator] = None,
+        file_path: Optional[str] = None
 ) -> pd.DataFrame:
     """
     Performs exhaustive grid search over hyperparameters using k-fold cross-validation.

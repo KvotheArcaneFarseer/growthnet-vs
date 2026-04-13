@@ -26,7 +26,7 @@ from torch.nn.modules.loss import _Loss
 from torch.nn import BCEWithLogitsLoss
 from scipy.stats import zscore
 from scipy.special import expit
-from typing import Any, Callable
+from typing import Any, Callable, Optional, Union
 from monai.losses.tversky import TverskyLoss
 from monai.utils import LossReduction, look_up_option
 from monai.utils.enums import StrEnum
@@ -68,14 +68,14 @@ class TverskyCELoss(_Loss):
             to_onehot_y: bool = False,
             sigmoid: bool = False,
             softmax: bool = False,
-            other_act: Callable | None = None,
+            other_act: Optional[Callable] = None,
             alpha: float = 0.5,
             beta: float = 0.5,
-            reduction: LossReduction | str = LossReduction.MEAN,
+            reduction: Union[LossReduction, str] = LossReduction.MEAN,
             smooth_nr: float = 1e-5,
             smooth_dr: float = 1e-5,
             batch: bool = False,
-            weight: float | None = None,
+            weight: Optional[float] = None,
             lambda_tversky: float = 1.0,
             lambda_ce: float = 1.0
     ) -> None:
@@ -167,8 +167,8 @@ class RelativeVolumdeDifferenceMetric(CumulativeIterationMetric):
     
     def aggregate(
             self,
-            reduction: monai.utils.enums.MetricReduction | str | None = None
-    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+            reduction: Optional[Union[monai.utils.enums.MetricReduction, str]] = None
+    ) -> Union[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
         """
         Aggregate the buffered metric values across all iterations.
         

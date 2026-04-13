@@ -61,7 +61,7 @@ def train(
         model: torch.nn.Module,
         train_loader: monai.data.DataLoader,
         val_loader: monai.data.DataLoader,
-        accelerator: Accelerator | None = None,
+        accelerator: Optional[Accelerator] = None,
         max_epochs: int = 5,
         loss_function: Literal["dice", "dicece", "dicefocal", "tversky", "tverskyce"] = "dicece",
         initial_lr: float = 1e-4,

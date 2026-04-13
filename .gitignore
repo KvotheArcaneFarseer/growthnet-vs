@@ -1,4 +1,32 @@
-# Bytecode and caches
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# Data
+*.nii
+*.nii.gz
+
+# Outputs
+batch_outputs/
+tmp_batch_outputs/
+embedding_outputs/
+animation_outputs/
+graphify-out/
+
+# Temp / CSV
+tmp_*.csv
+
+# System
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/# Bytecode and caches
 __pycache__/
 *.py[cod]
 *$py.class
@@ -75,3 +103,13 @@ tmp/
 temp/
 **/tmp/
 **/temp/
+
+# Claude / local agent state
+.claude/
+.claude-flow/
+.mcp.json
+
+# Temp validation
+tmp_seed_validation/
+
+!projects/vivit/src/data/synthetic.py

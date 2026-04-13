@@ -69,4 +69,37 @@ Example metrics:
 
 ---
 
-## Repository Structure
+## Repo-structure
+GrowthNet/
+│
+├── embed_tumor.py # Main tumor embedding pipeline
+├── view_napari.py # Visualization tool (Napari)
+├── make_lollipop_animation.py # Tumor growth animation generator
+├── make_lollipop_napari.py # Interactive visualization
+│
+├── scripts/
+│ ├── run_batch_embedding.py # Batch processing entrypoint
+│ ├── export_graphify_obsidian.py # Graphify export utilities
+│ └── export_graphify_architecture_obsidian.py
+│
+├── projects/vivit/src/
+│ ├── data/
+│ │ └── synthetic.py # Core tumor generation logic
+│ │
+│ ├── networks/
+│ │ ├── t_unetr.py # Model architecture (UNETR variant)
+│ │ └── vitautoenc.py # Vision transformer autoencoder
+│ │
+│ └── train/
+│ ├── grid_search.py
+│ ├── pretrain_ops.py
+│ ├── train_ops.py
+│ └── utils.py
+│
+├── docs/
+│ └── ai_workflow/
+│ ├── AI_AGENTS.md # Agent system design (Claude + Codex)
+│ └── CLAUDE_WORKFLOW.md # Development workflow documentation
+│
+├── README.md
+└── .gitignore

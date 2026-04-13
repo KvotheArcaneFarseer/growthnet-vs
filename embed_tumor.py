@@ -490,11 +490,17 @@ def validate_embedding_case(
     if not monotone_growth:
         add_finding("warning", "non_monotone_growth", "Placed mask voxel counts are not monotone non-decreasing across timepoints.")
 
-    if selected_orientation.low_confidence or selected_orientation.confidence <= thresholds.orientation_confidence_warn:
+    if selected_orientation.confidence <= thresholds.orientation_confidence_warn:
         add_finding(
             "warning",
             "orientation_low_confidence",
-            f"Orientation confidence {selected_orientation.confidence:.4f} is low (margin {selected_orientation.debug.get('score_margin', 0.0):.4f}).",
+            f"Orientation confidence {selected_orientation.confidence:.4f} is below the warning threshold {thresholds.orientation_confidence_warn:.4f} (margin {selected_orientation.debug.get('score_margin', 0.0):.4f}).",
+        )
+    elif selected_orientation.low_confidence:
+        add_finding(
+            "warning",
+            "orientation_low_score_margin",
+            f"Orientation score margin {selected_orientation.debug.get('score_margin', 0.0):.4f} is low despite confidence {selected_orientation.confidence:.4f} exceeding the warning threshold {thresholds.orientation_confidence_warn:.4f}.",
         )
 
     if not strategy_agreement:

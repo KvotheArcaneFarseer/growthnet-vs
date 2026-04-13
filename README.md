@@ -1,21 +1,72 @@
-# GrowthNet
-Version: v0.0 (placeholder)  
-Last updated: 2026-03-12  
-Owner: George Maragkos
+# GrowthNet-VS: Synthetic Vestibular Schwannoma Generation Pipeline
 
-## Purpose
-GrowthNet is the UVA Neurosurgery AI Lab effort to build time aware generative models for vestibular schwannoma growth prediction from longitudinal MRI.
+A production-grade pipeline for generating and embedding **synthetic vestibular schwannoma (VS) tumors** into MRI scans using anatomically realistic geometry and deterministic modeling.
 
-This repository is the canonical codebase starting 2026-03-12. The prior repository has been renamed to GrowthNet_legacy.
+---
 
-## Status
-This is a newly initialized repo with the standardized project layout. Code is being migrated from GrowthNet_legacy.
+## Overview
 
-## Where to start
-1. See docs/LAB_DATA_STRUCTURE_GUIDE.md for the Rivanna and repo organization rules.
-2. See projects/ for project specific codebases.
+This project builds a **synthetic tumor generation system** designed to:
 
-## Notes
-This top level README is a placeholder and will be expanded into the full GrowthNet project overview once migration is complete.
+- Model realistic **vestibular schwannoma growth** (IAC → CPA “lollipop” geometry)
+- Embed tumors into real MRI volumes
+- Generate reproducible datasets for research and machine learning
+- Run scalable batch processing on HPC systems (e.g., Rivanna)
 
-For repository conventions including the `.gitignore` policy, see docs/REPO_STRUCTURE.md.
+---
+
+## Key Features
+
+### Anatomically Realistic Geometry
+- Implements **lollipop structure**:
+  - Narrow intracanalicular (IAC) stem
+  - Expanding CPA bulb
+- Convex taper + controlled growth dynamics
+- Smooth low-frequency perturbations (no voxel noise)
+
+---
+
+### Deterministic Generation
+- Seeded using:
+  - Explicit seed OR
+  - Hash of MRI + segmentation path
+- Guarantees:
+  - Reproducibility across runs
+  - No frame-to-frame randomness
+
+---
+
+### Synthetic Tumor Embedding
+- Inserts tumors into MRI volumes using:
+  - Distance-transform-based blending
+  - Spatial alignment via segmentation centroid + principal axis
+- Produces:
+  - Volume + mask pairs
+  - Multi-timepoint tumor growth (t0 → t4)
+
+---
+
+### Batch Processing Pipeline
+- CSV-driven batch execution
+- Generates:
+  - Per-case outputs
+  - QC visualizations
+  - Aggregated metrics
+
+Example metrics:
+- centroid offset
+- retained fraction
+- orientation confidence
+- clipping frequency
+
+---
+
+### HPC-Ready
+- Designed for scalable execution on clusters (e.g., Rivanna)
+- Supports:
+  - multi-case processing
+  - reproducible dataset generation
+
+---
+
+## Repository Structure

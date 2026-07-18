@@ -1,0 +1,48 @@
+{
+  "input_csv": "analysis/batch_reliability/local_batch_smoke_cases.csv",
+  "out_dir": "analysis/batch_reliability/local_smoke_outputs",
+  "total_cases": 1,
+  "completed_cases": 1,
+  "exception_count": 0,
+  "success_count": 0,
+  "warning_count": 1,
+  "hard_failure_count": 1,
+  "clipping_case_count": 1,
+  "strategy_disagreement_count": 0,
+  "orientation_confidence": {
+    "mean": 0.0007184940105658807,
+    "min": 0.0007184940105658807,
+    "max": 0.0007184940105658807
+  },
+  "primary_axis_error_deg": {
+    "mean": 20.352687664773338,
+    "min": 20.352687664773338,
+    "max": 20.352687664773338
+  },
+  "ravd": {
+    "mean": 0.12109375,
+    "min": 0.12109375,
+    "max": 0.12109375
+  },
+  "volume_converged_count": 0,
+  "centroid_offset_mm": {
+    "mean": 0.02542372438362385,
+    "min": 0.02542372438362385,
+    "max": 0.02542372438362385
+  },
+  "retained_fraction": {
+    "mean": 0.9828767123287672,
+    "min": 0.9828767123287672,
+    "max": 0.9828767123287672
+  },
+  "placed_to_seg_ratio": {
+    "mean": 13.427385892116183,
+    "min": 13.427385892116183,
+    "p25": 13.427385892116183,
+    "median": 13.427385892116183,
+    "p75": 13.427385892116183,
+    "max": 13.427385892116183
+  },
+  "clipping_frequency": 1.0,
+  "strategy_disagreement_frequency": 0.0
+}

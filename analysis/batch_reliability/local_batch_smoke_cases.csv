@@ -1,0 +1,2 @@
+case_id,mri_path,seg_path,target_tumor_volume_mm3,volume_max_iterations
+local_smoke_from_existing_embedding,embedding_outputs/embedded_tumor_volume.nii.gz,embedding_outputs/embedded_tumor_mask.nii.gz,64,3

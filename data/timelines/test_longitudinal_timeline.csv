@@ -1,0 +1,6 @@
+patient_id,background_mri_id,T1_volume_mm3,T2_volume_mm3,T3_volume_mm3,T4_volume_mm3,growth_label
+P0001,BG001,120,121,119,122,stable
+P0002,BG001,100,105,102,101,stable
+P0003,BG002,80,120,190,310,growing
+P0004,BG002,150,180,230,300,growing
+P0005,BG003,200,202,198,201,stable

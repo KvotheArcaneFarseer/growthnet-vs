@@ -5,13 +5,18 @@ from __future__ import annotations
 
 import argparse
 import csv
+import datetime as dt
 import json
+import os
 import re
 import sys
 import traceback
 from pathlib import Path
 from statistics import mean
 from typing import Any
+
+for _thread_env in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ.setdefault(_thread_env, "1")
 
 import numpy as np
 
@@ -20,7 +25,16 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from embed_tumor import main as run_embedding_case  # noqa: E402
+REQUIRED_CASE_OUTPUTS = (
+    "embedding_metrics.json",
+    "embedding_metrics.csv",
+    "embedded_tumor_volume.nii.gz",
+    "embedded_tumor_mask.nii.gz",
+    "embedded_tumor_late_volume.nii.gz",
+    "embedded_tumor_late_mask.nii.gz",
+    "qc_embedding.png",
+    "qc_embedding_late.png",
+)
 
 
 def _sanitize_case_id(case_id: str) -> str:
@@ -53,12 +67,27 @@ def _flatten_case_metrics(metrics: dict[str, Any], case_id: str, case_out_dir: P
         "case_id": case_id,
         "case_out_dir": str(case_out_dir),
         "status": "completed",
+        "canal_growth_scale": metrics.get("canal_growth_scale"),
+        "bulb_growth_scale": metrics.get("bulb_growth_scale"),
+        "t0_volume_fraction_of_seg": metrics.get("t0_volume_fraction_of_seg"),
+        "target_volume_mm3": metrics.get("target_volume_mm3"),
+        "volume_target_timepoint": metrics.get("volume_target_timepoint"),
+        "volume_target_timepoint_index": metrics.get("volume_target_timepoint_index"),
+        "volume_target_timepoint_day": metrics.get("volume_target_timepoint_day"),
+        "target_timepoint_actual_volume_mm3": metrics.get("target_timepoint_actual_volume_mm3"),
+        "target_timepoint_voxels": metrics.get("target_timepoint_voxels"),
+        "actual_volume_mm3": metrics.get("actual_volume_mm3"),
+        "ravd": metrics.get("ravd"),
+        "volume_converged": metrics.get("volume_converged"),
+        "volume_iterations": metrics.get("volume_iterations"),
+        "volume_scale_final": metrics.get("volume_scale_final"),
         "seed": metrics.get("seed"),
         "orientation_method": metrics.get("orientation_method"),
         "orientation_confidence": metrics.get("orientation_confidence"),
         "orientation_score_margin": metrics.get("orientation_score_margin"),
         "orientation_normalized_gap": metrics.get("orientation_normalized_gap"),
         "orientation_low_confidence": metrics.get("orientation_low_confidence"),
+        "primary_axis_error_deg": metrics.get("primary_axis_error_deg"),
         "centroid_offset_mm": metrics.get("centroid_offset_mm"),
         "retained_fraction": metrics.get("retained_fraction"),
         "placed_to_seg_ratio": metrics.get("placed_to_seg_ratio"),
@@ -78,12 +107,27 @@ def _error_case_row(case_id: str, case_out_dir: Path, exc: Exception) -> dict[st
         "case_id": case_id,
         "case_out_dir": str(case_out_dir),
         "status": "exception",
+        "canal_growth_scale": None,
+        "bulb_growth_scale": None,
+        "t0_volume_fraction_of_seg": None,
+        "target_volume_mm3": None,
+        "volume_target_timepoint": None,
+        "volume_target_timepoint_index": None,
+        "volume_target_timepoint_day": None,
+        "target_timepoint_actual_volume_mm3": None,
+        "target_timepoint_voxels": None,
+        "actual_volume_mm3": None,
+        "ravd": None,
+        "volume_converged": None,
+        "volume_iterations": None,
+        "volume_scale_final": None,
         "seed": None,
         "orientation_method": None,
         "orientation_confidence": None,
         "orientation_score_margin": None,
         "orientation_normalized_gap": None,
         "orientation_low_confidence": None,
+        "primary_axis_error_deg": None,
         "centroid_offset_mm": None,
         "retained_fraction": None,
         "placed_to_seg_ratio": None,
@@ -108,6 +152,88 @@ def _summarize_numeric(values: list[float]) -> dict[str, float | None]:
         "min": float(min(values)),
         "max": float(max(values)),
     }
+
+
+def _optional_float(row: dict[str, str], key: str) -> float | None:
+    """Parse an optional float field from a batch CSV row."""
+    raw = row.get(key)
+    if raw is None:
+        return None
+    value = raw.strip()
+    if not value:
+        return None
+    return float(value)
+
+
+def _optional_int(row: dict[str, str], key: str) -> int | None:
+    """Parse an optional integer field from a batch CSV row."""
+    raw = row.get(key)
+    if raw is None:
+        return None
+    value = raw.strip()
+    if not value:
+        return None
+    return int(value)
+
+
+def _case_parameters(row: dict[str, str]) -> dict[str, Any]:
+    """Parse batch CSV columns that control one embedding run."""
+    canal_growth_scale = _optional_float(row, "canal_growth_scale")
+    bulb_growth_scale = _optional_float(row, "bulb_growth_scale")
+    t0_volume_fraction_of_seg = _optional_float(row, "t0_volume_fraction_of_seg")
+    target_tumor_volume_mm3 = _optional_float(row, "target_tumor_volume_mm3")
+    volume_target_timepoint = row.get("volume_target_timepoint", "").strip() or "first"
+    volume_ravd_tolerance = _optional_float(row, "volume_ravd_tolerance")
+    volume_max_iterations = _optional_int(row, "volume_max_iterations")
+    return {
+        "canal_growth_scale": 1.0 if canal_growth_scale is None else canal_growth_scale,
+        "bulb_growth_scale": 1.0 if bulb_growth_scale is None else bulb_growth_scale,
+        "t0_volume_fraction_of_seg": t0_volume_fraction_of_seg,
+        "target_tumor_volume_mm3": target_tumor_volume_mm3,
+        "volume_target_timepoint": volume_target_timepoint,
+        "volume_ravd_tolerance": 0.05 if volume_ravd_tolerance is None else volume_ravd_tolerance,
+        "volume_max_iterations": 10 if volume_max_iterations is None else volume_max_iterations,
+    }
+
+
+def _enrich_case_metrics(metrics: dict[str, Any], case_id: str, case_out_dir: Path, params: dict[str, Any]) -> dict[str, Any]:
+    """Add batch-level metadata to a case metrics payload."""
+    metrics["case_id"] = case_id
+    metrics["case_out_dir"] = str(case_out_dir)
+    metrics["status"] = "completed"
+    metrics["canal_growth_scale"] = params["canal_growth_scale"]
+    metrics["bulb_growth_scale"] = params["bulb_growth_scale"]
+    metrics["t0_volume_fraction_of_seg"] = params["t0_volume_fraction_of_seg"]
+    metrics["target_tumor_volume_mm3"] = params["target_tumor_volume_mm3"]
+    metrics["volume_target_timepoint"] = params["volume_target_timepoint"]
+    metrics["volume_ravd_tolerance"] = params["volume_ravd_tolerance"]
+    metrics["volume_max_iterations"] = params["volume_max_iterations"]
+    return metrics
+
+
+def _load_resume_metrics(case_id: str, case_out_dir: Path, params: dict[str, Any]) -> dict[str, Any] | None:
+    """Return existing case metrics when all required outputs are present and usable."""
+    missing_outputs = [name for name in REQUIRED_CASE_OUTPUTS if not (case_out_dir / name).exists()]
+    if missing_outputs:
+        return None
+    metrics_path = case_out_dir / "embedding_metrics.json"
+    try:
+        metrics = json.loads(metrics_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if metrics.get("hard_failures"):
+        return None
+    return _enrich_case_metrics(metrics, case_id=case_id, case_out_dir=case_out_dir, params=params)
+
+
+def _write_status_event(status_path: Path, event: dict[str, Any]) -> None:
+    """Append one durable case status event as JSON Lines."""
+    payload = {
+        "timestamp_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+        **event,
+    }
+    with status_path.open("a") as handle:
+        handle.write(json.dumps(payload, sort_keys=True) + "\n")
 
 
 def _placed_to_seg_distribution(values: list[float]) -> dict[str, float | None]:
@@ -135,6 +261,11 @@ def _build_failure_report(completed_cases: list[dict[str, Any]], exception_cases
         completed_cases,
         key=lambda item: float(item.get("worst_clipping_fraction", float("inf"))),
     )
+    worst_axis_error = sorted(
+        completed_cases,
+        key=lambda item: float(item.get("primary_axis_error_deg", float("-inf"))),
+        reverse=True,
+    )
     return {
         "lowest_confidence_cases": [
             {
@@ -154,6 +285,16 @@ def _build_failure_report(completed_cases: list[dict[str, Any]], exception_cases
                 "case_out_dir": item.get("case_out_dir"),
             }
             for item in worst_clip[:5]
+        ],
+        "worst_axis_error_cases": [
+            {
+                "case_id": item["case_id"],
+                "primary_axis_error_deg": item.get("primary_axis_error_deg"),
+                "orientation_method": item.get("orientation_method"),
+                "case_out_dir": item.get("case_out_dir"),
+            }
+            for item in worst_axis_error[:5]
+            if item.get("primary_axis_error_deg") is not None
         ],
         "warning_cases": [
             {
@@ -199,6 +340,8 @@ def _build_batch_summary(case_results: list[dict[str, Any]], input_csv: Path, ou
     completed = [item for item in case_results if item["status"] == "completed"]
     exceptions = [item for item in case_results if item["status"] == "exception"]
     confidence_values = [float(item["orientation_confidence"]) for item in completed if item.get("orientation_confidence") is not None]
+    axis_error_values = [float(item["primary_axis_error_deg"]) for item in completed if item.get("primary_axis_error_deg") is not None]
+    ravd_values = [float(item["ravd"]) for item in completed if item.get("ravd") is not None]
     centroid_values = [float(item["centroid_offset_mm"]) for item in completed if item.get("centroid_offset_mm") is not None]
     retained_values = [float(item["retained_fraction"]) for item in completed if item.get("retained_fraction") is not None]
     ratio_values = [float(item["placed_to_seg_ratio"]) for item in completed if item.get("placed_to_seg_ratio") is not None]
@@ -220,6 +363,9 @@ def _build_batch_summary(case_results: list[dict[str, Any]], input_csv: Path, ou
         "clipping_case_count": len(clipping_cases),
         "strategy_disagreement_count": len(disagreement_cases),
         "orientation_confidence": _summarize_numeric(confidence_values),
+        "primary_axis_error_deg": _summarize_numeric(axis_error_values),
+        "ravd": _summarize_numeric(ravd_values),
+        "volume_converged_count": int(sum(1 for item in completed if item.get("volume_converged") is True)),
         "centroid_offset_mm": _summarize_numeric(centroid_values),
         "retained_fraction": _summarize_numeric(retained_values),
         "placed_to_seg_ratio": _placed_to_seg_distribution(ratio_values),
@@ -242,31 +388,79 @@ def _write_summary_csv(case_results: list[dict[str, Any]], csv_path: Path) -> No
             writer.writerow(row)
 
 
-def run_batch(input_csv: Path, out_dir: Path, num_cases: int | None = None) -> tuple[Path, Path, Path]:
+def run_batch(input_csv: Path, out_dir: Path, num_cases: int | None = None, resume: bool = False) -> tuple[Path, Path, Path]:
     """Run the embedding pipeline across a CSV-defined batch and write summaries."""
     out_dir.mkdir(parents=True, exist_ok=True)
     case_rows = _load_case_rows(input_csv, num_cases=num_cases)
     case_results: list[dict[str, Any]] = []
     summary_rows: list[dict[str, Any]] = []
+    status_path = out_dir / "batch_case_status.jsonl"
 
     for index, row in enumerate(case_rows, start=1):
         case_id = row["case_id"].strip()
         case_dir_name = _sanitize_case_id(case_id)
         case_out_dir = out_dir / case_dir_name
+        params = _case_parameters(row)
+        if resume:
+            existing_metrics = _load_resume_metrics(case_id=case_id, case_out_dir=case_out_dir, params=params)
+            if existing_metrics is not None:
+                print(f"[{index}/{len(case_rows)}] Skipping completed case `{case_id}` -> {case_out_dir}")
+                case_results.append(existing_metrics)
+                summary_rows.append(_flatten_case_metrics(existing_metrics, case_id=case_id, case_out_dir=case_out_dir))
+                _write_status_event(
+                    status_path,
+                    {
+                        "case_id": case_id,
+                        "case_out_dir": str(case_out_dir),
+                        "status": "skipped_existing",
+                        "index": index,
+                        "total_cases": len(case_rows),
+                    },
+                )
+                continue
         print(f"[{index}/{len(case_rows)}] Running case `{case_id}` -> {case_out_dir}")
+        _write_status_event(
+            status_path,
+            {
+                "case_id": case_id,
+                "case_out_dir": str(case_out_dir),
+                "status": "started",
+                "index": index,
+                "total_cases": len(case_rows),
+            },
+        )
         try:
+            from embed_tumor import main as run_embedding_case
+
             run_embedding_case(
                 mri_path=Path(row["mri_path"]).expanduser(),
                 seg_path=Path(row["seg_path"]).expanduser(),
                 out_dir=case_out_dir,
+                canal_growth_scale=params["canal_growth_scale"],
+                bulb_growth_scale=params["bulb_growth_scale"],
+                target_tumor_volume_mm3=params["target_tumor_volume_mm3"],
+                volume_target_timepoint=params["volume_target_timepoint"],
+                volume_ravd_tolerance=params["volume_ravd_tolerance"],
+                volume_max_iterations=params["volume_max_iterations"],
+                t0_volume_fraction_of_seg=params["t0_volume_fraction_of_seg"],
             )
             metrics_path = case_out_dir / "embedding_metrics.json"
             metrics = json.loads(metrics_path.read_text())
-            metrics["case_id"] = case_id
-            metrics["case_out_dir"] = str(case_out_dir)
-            metrics["status"] = "completed"
+            metrics = _enrich_case_metrics(metrics, case_id=case_id, case_out_dir=case_out_dir, params=params)
             case_results.append(metrics)
             summary_rows.append(_flatten_case_metrics(metrics, case_id=case_id, case_out_dir=case_out_dir))
+            _write_status_event(
+                status_path,
+                {
+                    "case_id": case_id,
+                    "case_out_dir": str(case_out_dir),
+                    "status": "completed",
+                    "index": index,
+                    "total_cases": len(case_rows),
+                    "warning_count": len(metrics.get("warnings", [])),
+                    "hard_failure_count": len(metrics.get("hard_failures", [])),
+                },
+            )
         except Exception as exc:
             print(f"  [error] Case `{case_id}` failed: {exc}")
             traceback.print_exc()
@@ -276,10 +470,25 @@ def run_batch(input_csv: Path, out_dir: Path, num_cases: int | None = None) -> t
                     "case_id": case_id,
                     "case_out_dir": str(case_out_dir),
                     "status": "exception",
+                    "canal_growth_scale": None,
+                    "bulb_growth_scale": None,
+                    "t0_volume_fraction_of_seg": None,
+                    "target_volume_mm3": None,
+                    "volume_target_timepoint": None,
+                    "volume_target_timepoint_index": None,
+                    "volume_target_timepoint_day": None,
+                    "target_timepoint_actual_volume_mm3": None,
+                    "target_timepoint_voxels": None,
+                    "actual_volume_mm3": None,
+                    "ravd": None,
+                    "volume_converged": None,
+                    "volume_iterations": None,
+                    "volume_scale_final": None,
                     "warnings": [],
                     "hard_failures": [str(exc)],
                     "strategy_agreement": None,
                     "orientation_confidence": None,
+                    "primary_axis_error_deg": None,
                     "retained_fraction": None,
                     "centroid_offset_mm": None,
                     "placed_to_seg_ratio": None,
@@ -289,6 +498,18 @@ def run_batch(input_csv: Path, out_dir: Path, num_cases: int | None = None) -> t
                 }
             )
             summary_rows.append(error_row)
+            _write_status_event(
+                status_path,
+                {
+                    "case_id": case_id,
+                    "case_out_dir": str(case_out_dir),
+                    "status": "exception",
+                    "index": index,
+                    "total_cases": len(case_rows),
+                    "exception_type": type(exc).__name__,
+                    "exception_message": str(exc),
+                },
+            )
 
     batch_summary = _build_batch_summary(case_results, input_csv=input_csv, out_dir=out_dir)
     failure_report = _build_failure_report(
@@ -310,12 +531,16 @@ def run_batch(input_csv: Path, out_dir: Path, num_cases: int | None = None) -> t
     print(f"  Warning count         : {batch_summary['warning_count']}")
     print(f"  Hard failure count    : {batch_summary['hard_failure_count']}")
     print(f"  Mean orientation conf : {batch_summary['orientation_confidence']['mean']}")
+    print(f"  Mean axis error       : {batch_summary['primary_axis_error_deg']['mean']} deg")
+    print(f"  Mean RAVD             : {batch_summary['ravd']['mean']}")
+    print(f"  Volume converged      : {batch_summary['volume_converged_count']}")
     print(f"  Mean centroid offset  : {batch_summary['centroid_offset_mm']['mean']} mm")
     print(f"  Mean retained fraction: {batch_summary['retained_fraction']['mean']}")
     print(f"  Strategy disagreements: {batch_summary['strategy_disagreement_count']}")
     print(f"  Wrote {summary_json_path}")
     print(f"  Wrote {summary_csv_path}")
     print(f"  Wrote {failure_json_path}")
+    print(f"  Wrote {status_path}")
 
     return summary_json_path, summary_csv_path, failure_json_path
 
@@ -325,12 +550,14 @@ def main() -> None:
     parser.add_argument("--input_csv", required=True, help="CSV with columns case_id,mri_path,seg_path")
     parser.add_argument("--out_dir", required=True, help="Batch output directory")
     parser.add_argument("--num_cases", type=int, default=None, help="Optional cap on the number of cases to run")
+    parser.add_argument("--resume", action="store_true", help="Skip cases with a complete existing output set")
     args = parser.parse_args()
 
     run_batch(
         input_csv=Path(args.input_csv).expanduser(),
         out_dir=Path(args.out_dir).expanduser(),
         num_cases=args.num_cases,
+        resume=args.resume,
     )
 
 

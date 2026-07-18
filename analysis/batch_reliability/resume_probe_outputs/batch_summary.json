@@ -1,0 +1,48 @@
+{
+  "input_csv": "analysis/batch_reliability/local_batch_resume_cases.csv",
+  "out_dir": "analysis/batch_reliability/resume_probe_outputs",
+  "total_cases": 1,
+  "completed_cases": 1,
+  "exception_count": 0,
+  "success_count": 1,
+  "warning_count": 0,
+  "hard_failure_count": 0,
+  "clipping_case_count": 1,
+  "strategy_disagreement_count": 0,
+  "orientation_confidence": {
+    "mean": 0.20971068958584738,
+    "min": 0.20971068958584738,
+    "max": 0.20971068958584738
+  },
+  "primary_axis_error_deg": {
+    "mean": null,
+    "min": null,
+    "max": null
+  },
+  "ravd": {
+    "mean": null,
+    "min": null,
+    "max": null
+  },
+  "volume_converged_count": 0,
+  "centroid_offset_mm": {
+    "mean": 0.02948112513354953,
+    "min": 0.02948112513354953,
+    "max": 0.02948112513354953
+  },
+  "retained_fraction": {
+    "mean": 1.0078125,
+    "min": 1.0078125,
+    "max": 1.0078125
+  },
+  "placed_to_seg_ratio": {
+    "mean": 0.631598467054024,
+    "min": 0.631598467054024,
+    "p25": 0.631598467054024,
+    "median": 0.631598467054024,
+    "p75": 0.631598467054024,
+    "max": 0.631598467054024
+  },
+  "clipping_frequency": 1.0,
+  "strategy_disagreement_frequency": 0.0
+}

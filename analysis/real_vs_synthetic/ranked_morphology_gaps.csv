@@ -1,0 +1,8 @@
+rank_score_abs_log_median_ratio,metric,median_ratio_synthetic_over_real,median_diff_synthetic_minus_real,ks_statistic,cliffs_delta_synthetic_vs_real,interpretation
+0.7883240536920738,bbox_fill_fraction,0.45460605252632985,-0.2043456543456543,0.8505747126436781,-0.883985848710383,Lower synthetic fill suggests more empty bounding-box space from lollipop/stem geometry.
+0.5823542602236996,elongation,1.790248183467881,1.0884724318013306,0.9233716475095786,0.919613628690125,Synthetic masks are more elongated when ratio > 1.
+0.45568890461517625,aspect_ratio_major_to_minor2,1.5772595902555067,0.9988647210167101,0.8199233716475096,0.7654174190044186,Higher values indicate larger major/minor2 disparity.
+0.27696020771156815,principal_axis_length_major_mm,1.3191138794306205,3.9645834247181817,0.24904214559386972,0.28400933632800457,Higher synthetic major axis indicates longer dominant morphology.
+0.2468600779315258,max_diameter_bbox_mm,1.28,3.5,0.24521072796934865,0.2865929742663789,Higher synthetic diameter indicates spatial extent larger than real at matched volume.
+0.1699101003472746,sphericity,0.8437406651797419,-0.11364408195864484,0.6053639846743295,-0.565831388264999,Lower synthetic sphericity suggests less compact or more irregular shape.
+0.1638208726168313,surface_to_volume_ratio,1.1780032835469763,0.18612235290058643,0.14559386973180077,0.125467917382305,Higher synthetic ratio indicates more surface per unit volume.

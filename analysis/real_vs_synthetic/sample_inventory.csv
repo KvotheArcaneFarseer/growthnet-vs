@@ -1,0 +1,8 @@
+item,count,notes
+real_features_rows,291,Pulled feature rows available locally.
+synthetic_features_rows,261,Pulled feature rows available locally.
+matched_case_ids,261,Intersection of real and synthetic feature case_id values.
+real_source_seg_paths_existing_locally,0,CSV seg_path values point to original segmentation masks.
+synthetic_feature_seg_paths_existing_locally,0,Pulled CSV seg_path values before local remapping.
+synthetic_manifest_local_masks_existing,261,Local synthetic masks after remapping to repo-local paths.
+real_single_component_targets,261,Targets used to generate the synthetic benchmark.

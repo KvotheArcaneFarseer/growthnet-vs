@@ -1,0 +1,223 @@
+{
+  "case_id": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/embedding_outputs/embedded_tumor_volume.nii.gz__/Users/kvothearcane/Personal/Coding Projects/GrowthNet/embedding_outputs/embedded_tumor_mask.nii.gz",
+  "seed": 1280147626,
+  "source_mri": "embedding_outputs/embedded_tumor_volume.nii.gz",
+  "source_seg": "embedding_outputs/embedded_tumor_mask.nii.gz",
+  "orientation_method": "late_dice",
+  "orientation_confidence": 0.0007184940105658807,
+  "orientation_score_margin": 0.00019905980995651995,
+  "orientation_normalized_gap": 0.0007184940105658807,
+  "orientation_low_confidence": true,
+  "selected_axis_vox": [
+    -0.8145281382438181,
+    -0.5784364444223936,
+    -0.04421755050925996
+  ],
+  "selected_axis_phys": [
+    -0.8145281382438181,
+    -0.5784364444223936,
+    -0.04421755050925996
+  ],
+  "source_voxel_count": 73,
+  "placed_voxel_count": 574,
+  "max_placed_voxel_count": 3236,
+  "source_volume_mm3": 73.0,
+  "placed_volume_mm3": 71.75,
+  "max_placed_volume_mm3": 404.5,
+  "retained_fraction": 0.9828767123287672,
+  "centroid_offset_vox": 0.0508474487672477,
+  "centroid_offset_mm": 0.02542372438362385,
+  "primary_axis_error_deg": 20.352687664773338,
+  "cpa_radius_anatomy_mm": 3.5,
+  "cpa_radius_effective_mm": 3.5,
+  "cpa_radius_override_active": false,
+  "volume_optimization_variable": "init_scale",
+  "target_volume_mm3": 64.0,
+  "volume_target_timepoint": "first",
+  "volume_target_timepoint_index": 0,
+  "volume_target_timepoint_day": 0,
+  "target_timepoint_actual_volume_mm3": 71.75,
+  "target_timepoint_voxels": 574,
+  "actual_volume_mm3": 71.75,
+  "ravd": 0.12109375,
+  "volume_converged": false,
+  "volume_iterations": 3,
+  "volume_scale_final": 1.625,
+  "target_seg_voxel_count": 241,
+  "placed_to_seg_ratio": 13.427385892116183,
+  "monotone_growth": true,
+  "worst_clipping_fraction": 0.9828767123287672,
+  "strategy_agreement": true,
+  "warnings": [
+    "Orientation score margin 0.0002 is below threshold 0.05 \u2014 candidates have similar Dice scores.",
+    "Orientation normalized gap 0.0007 is below threshold 0.08."
+  ],
+  "hard_failures": [
+    "Placed/seg volume ratio 13.427 is implausible."
+  ],
+  "findings": [
+    {
+      "severity": "warning",
+      "code": "orientation_low_score_margin",
+      "message": "Orientation score margin 0.0002 is below threshold 0.05 \u2014 candidates have similar Dice scores."
+    },
+    {
+      "severity": "warning",
+      "code": "orientation_low_normalized_gap",
+      "message": "Orientation normalized gap 0.0007 is below threshold 0.08."
+    },
+    {
+      "severity": "hard_failure",
+      "code": "placed_to_seg_ratio_fail",
+      "message": "Placed/seg volume ratio 13.427 is implausible."
+    }
+  ],
+  "strategy_results": [
+    {
+      "method": "late_dice",
+      "selected_axis_vox": [
+        -0.8145281382438181,
+        -0.5784364444223936,
+        -0.04421755050925996
+      ],
+      "confidence": 0.0007184940105658807,
+      "low_confidence": true,
+      "debug": {
+        "best_score": 0.13862525165372447,
+        "worst_score": 0.13842619184376795,
+        "score_margin": 0.00019905980995651995,
+        "normalized_gap": 0.0007184940105658807
+      },
+      "candidates": [
+        {
+          "axis_vox": [
+            -0.8145281382438181,
+            -0.5784364444223936,
+            -0.04421755050925996
+          ],
+          "score": 0.13862525165372447,
+          "label": "sign_neg",
+          "extras": {
+            "reference_mask": "late"
+          }
+        },
+        {
+          "axis_vox": [
+            0.8145281382438181,
+            0.5784364444223936,
+            0.04421755050925996
+          ],
+          "score": 0.13842619184376795,
+          "label": "sign_pos",
+          "extras": {
+            "reference_mask": "late"
+          }
+        }
+      ]
+    },
+    {
+      "method": "mid_growth_dice",
+      "selected_axis_vox": [
+        -0.8145281382438181,
+        -0.5784364444223936,
+        -0.04421755050925996
+      ],
+      "confidence": 0.0007184940105658807,
+      "low_confidence": true,
+      "debug": {
+        "best_score": 0.13862525165372447,
+        "worst_score": 0.13842619184376795,
+        "score_margin": 0.00019905980995651995,
+        "normalized_gap": 0.0007184940105658807
+      },
+      "candidates": [
+        {
+          "axis_vox": [
+            -0.8145281382438181,
+            -0.5784364444223936,
+            -0.04421755050925996
+          ],
+          "score": 0.13862525165372447,
+          "label": "sign_neg",
+          "extras": {
+            "reference_mask": "mid"
+          }
+        },
+        {
+          "axis_vox": [
+            0.8145281382438181,
+            0.5784364444223936,
+            0.04421755050925996
+          ],
+          "score": 0.13842619184376795,
+          "label": "sign_pos",
+          "extras": {
+            "reference_mask": "mid"
+          }
+        }
+      ]
+    }
+  ],
+  "timepoint_metrics": [
+    {
+      "timepoint_index": 0,
+      "day": 0,
+      "source_voxels": 73,
+      "placed_voxels": 574,
+      "source_volume_mm3": 73.0,
+      "placed_volume_mm3": 71.75,
+      "retained_fraction": 0.9828767123287672,
+      "centroid_offset_mm": 0.02542372438362385,
+      "axis_error_deg": 20.352687664773338,
+      "clipped": false
+    },
+    {
+      "timepoint_index": 1,
+      "day": 60,
+      "source_voxels": 220,
+      "placed_voxels": 1763,
+      "source_volume_mm3": 220.0,
+      "placed_volume_mm3": 220.375,
+      "retained_fraction": 1.0017045454545455,
+      "centroid_offset_mm": 1.8941013070078248,
+      "axis_error_deg": 3.140435708415329,
+      "clipped": false
+    },
+    {
+      "timepoint_index": 2,
+      "day": 120,
+      "source_voxels": 405,
+      "placed_voxels": 3236,
+      "source_volume_mm3": 405.0,
+      "placed_volume_mm3": 404.5,
+      "retained_fraction": 0.9987654320987654,
+      "centroid_offset_mm": 3.2948760979809846,
+      "axis_error_deg": 1.6980848892442586,
+      "clipped": false
+    },
+    {
+      "timepoint_index": 3,
+      "day": 180,
+      "source_voxels": 405,
+      "placed_voxels": 3236,
+      "source_volume_mm3": 405.0,
+      "placed_volume_mm3": 404.5,
+      "retained_fraction": 0.9987654320987654,
+      "centroid_offset_mm": 3.2948760979809846,
+      "axis_error_deg": 1.6980848892442586,
+      "clipped": false
+    },
+    {
+      "timepoint_index": 4,
+      "day": 240,
+      "source_voxels": 405,
+      "placed_voxels": 3236,
+      "source_volume_mm3": 405.0,
+      "placed_volume_mm3": 404.5,
+      "retained_fraction": 0.9987654320987654,
+      "centroid_offset_mm": 3.2948760979809846,
+      "axis_error_deg": 1.6980848892442586,
+      "clipped": false
+    }
+  ]
+}

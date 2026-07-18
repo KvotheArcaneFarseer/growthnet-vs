@@ -1,0 +1,2 @@
+{"case_id": "local_smoke_from_existing_embedding", "case_out_dir": "analysis/batch_reliability/local_smoke_outputs/local_smoke_from_existing_embedding", "index": 1, "status": "started", "timestamp_utc": "2026-07-18T04:58:10.635586+00:00", "total_cases": 1}
+{"case_id": "local_smoke_from_existing_embedding", "case_out_dir": "analysis/batch_reliability/local_smoke_outputs/local_smoke_from_existing_embedding", "hard_failure_count": 1, "index": 1, "status": "completed", "timestamp_utc": "2026-07-18T04:58:53.104290+00:00", "total_cases": 1, "warning_count": 2}

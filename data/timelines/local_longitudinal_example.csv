@@ -1,0 +1,3 @@
+patient_id,background_mri_id,T1_volume_mm3,T2_volume_mm3,T3_volume_mm3,T4_volume_mm3,growth_label
+LOCAL_STABLE_001,BG_LOCAL_001,120,121,119,122,stable
+LOCAL_GROWING_001,BG_LOCAL_001,80,120,190,310,growing

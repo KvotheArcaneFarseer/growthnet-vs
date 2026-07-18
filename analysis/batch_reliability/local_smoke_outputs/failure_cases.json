@@ -1,0 +1,48 @@
+{
+  "lowest_confidence_cases": [
+    {
+      "case_id": "local_smoke_from_existing_embedding",
+      "orientation_confidence": 0.0007184940105658807,
+      "orientation_method": "late_dice",
+      "orientation_score_margin": 0.00019905980995651995,
+      "case_out_dir": "analysis/batch_reliability/local_smoke_outputs/local_smoke_from_existing_embedding"
+    }
+  ],
+  "worst_clipping_cases": [
+    {
+      "case_id": "local_smoke_from_existing_embedding",
+      "worst_clipping_fraction": 0.9828767123287672,
+      "retained_fraction": 0.9828767123287672,
+      "case_out_dir": "analysis/batch_reliability/local_smoke_outputs/local_smoke_from_existing_embedding"
+    }
+  ],
+  "worst_axis_error_cases": [
+    {
+      "case_id": "local_smoke_from_existing_embedding",
+      "primary_axis_error_deg": 20.352687664773338,
+      "orientation_method": "late_dice",
+      "case_out_dir": "analysis/batch_reliability/local_smoke_outputs/local_smoke_from_existing_embedding"
+    }
+  ],
+  "warning_cases": [
+    {
+      "case_id": "local_smoke_from_existing_embedding",
+      "warnings": [
+        "Orientation score margin 0.0002 is below threshold 0.05 \u2014 candidates have similar Dice scores.",
+        "Orientation normalized gap 0.0007 is below threshold 0.08."
+      ],
+      "case_out_dir": "analysis/batch_reliability/local_smoke_outputs/local_smoke_from_existing_embedding"
+    }
+  ],
+  "hard_failure_cases": [
+    {
+      "case_id": "local_smoke_from_existing_embedding",
+      "hard_failures": [
+        "Placed/seg volume ratio 13.427 is implausible."
+      ],
+      "case_out_dir": "analysis/batch_reliability/local_smoke_outputs/local_smoke_from_existing_embedding"
+    }
+  ],
+  "strategy_disagreement_cases": [],
+  "exception_cases": []
+}

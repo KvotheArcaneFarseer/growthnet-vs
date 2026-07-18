@@ -1,0 +1,24 @@
+{
+  "lowest_confidence_cases": [
+    {
+      "case_id": "case_147",
+      "orientation_confidence": 0.20971068958584738,
+      "orientation_method": "late_dice",
+      "orientation_score_margin": 0.23227979575138485,
+      "case_out_dir": "analysis/batch_reliability/resume_probe_outputs/case_147"
+    }
+  ],
+  "worst_clipping_cases": [
+    {
+      "case_id": "case_147",
+      "worst_clipping_fraction": 0.9975083056478405,
+      "retained_fraction": 1.0078125,
+      "case_out_dir": "analysis/batch_reliability/resume_probe_outputs/case_147"
+    }
+  ],
+  "worst_axis_error_cases": [],
+  "warning_cases": [],
+  "hard_failure_cases": [],
+  "strategy_disagreement_cases": [],
+  "exception_cases": []
+}

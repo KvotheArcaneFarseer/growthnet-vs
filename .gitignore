@@ -97,6 +97,9 @@ data/
 datasets/
 **/data/
 **/datasets/
+!data/
+!data/timelines/
+!data/timelines/test_longitudinal_timeline.csv
 
 # Temporary scratch
 tmp/
@@ -113,3 +116,4 @@ temp/
 tmp_seed_validation/
 
 !projects/vivit/src/data/synthetic.py
+.gitnexus

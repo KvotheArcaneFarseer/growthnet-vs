@@ -1,0 +1,4 @@
+status,dependency,why_needed,local_fallback_used
+BLOCKED_REMOTE_DATA,Real segmentation NIfTI masks for the 261 matched usable targets,Required to independently re-extract real morphology features and verify extraction equivalence end-to-end.,Pulled real feature CSV and JSON summaries.
+BLOCKED_REMOTE_DATA,Full original 291-case train segmentation source masks,Required to validate population-level real distribution including 30 multi-component cases.,"Summary JSON documents 291 rows, while matched benchmark uses 261 single-component cases."
+BLOCKED_REMOTE_DATA,Clinical/anatomical labels for IAC/CPA canal-vs-bulb compartment split,Required to distinguish biologically meaningful lollipop differences from PCA/bounding-box extraction artifacts.,Whole-mask morphology metrics only.

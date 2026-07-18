@@ -1,0 +1,105 @@
+{
+  "task_id": "MORPH-001",
+  "real_feature_rows": 291,
+  "synthetic_feature_rows": 261,
+  "matched_case_ids": 261,
+  "local_synthetic_masks_existing": 261,
+  "real_summary_n_cases": 291,
+  "synthetic_summary_n_cases": 261,
+  "synthetic_reextraction_available": true,
+  "synthetic_reextraction_multiple_components": 9,
+  "top_ranked_gaps": [
+    {
+      "rank_score_abs_log_median_ratio": 0.7883240536920738,
+      "metric": "bbox_fill_fraction",
+      "median_ratio_synthetic_over_real": 0.45460605252632985,
+      "median_diff_synthetic_minus_real": -0.2043456543456543,
+      "ks_statistic": 0.8505747126436781,
+      "cliffs_delta_synthetic_vs_real": -0.883985848710383,
+      "interpretation": "Lower synthetic fill suggests more empty bounding-box space from lollipop/stem geometry."
+    },
+    {
+      "rank_score_abs_log_median_ratio": 0.5823542602236996,
+      "metric": "elongation",
+      "median_ratio_synthetic_over_real": 1.790248183467881,
+      "median_diff_synthetic_minus_real": 1.0884724318013306,
+      "ks_statistic": 0.9233716475095786,
+      "cliffs_delta_synthetic_vs_real": 0.919613628690125,
+      "interpretation": "Synthetic masks are more elongated when ratio > 1."
+    },
+    {
+      "rank_score_abs_log_median_ratio": 0.45568890461517625,
+      "metric": "aspect_ratio_major_to_minor2",
+      "median_ratio_synthetic_over_real": 1.5772595902555067,
+      "median_diff_synthetic_minus_real": 0.9988647210167101,
+      "ks_statistic": 0.8199233716475096,
+      "cliffs_delta_synthetic_vs_real": 0.7654174190044186,
+      "interpretation": "Higher values indicate larger major/minor2 disparity."
+    },
+    {
+      "rank_score_abs_log_median_ratio": 0.27696020771156815,
+      "metric": "principal_axis_length_major_mm",
+      "median_ratio_synthetic_over_real": 1.3191138794306205,
+      "median_diff_synthetic_minus_real": 3.9645834247181817,
+      "ks_statistic": 0.24904214559386972,
+      "cliffs_delta_synthetic_vs_real": 0.28400933632800457,
+      "interpretation": "Higher synthetic major axis indicates longer dominant morphology."
+    },
+    {
+      "rank_score_abs_log_median_ratio": 0.2468600779315258,
+      "metric": "max_diameter_bbox_mm",
+      "median_ratio_synthetic_over_real": 1.28,
+      "median_diff_synthetic_minus_real": 3.5,
+      "ks_statistic": 0.24521072796934865,
+      "cliffs_delta_synthetic_vs_real": 0.2865929742663789,
+      "interpretation": "Higher synthetic diameter indicates spatial extent larger than real at matched volume."
+    }
+  ],
+  "top_current_local_extractor_ranked_gaps": [
+    {
+      "rank_score_abs_log_median_ratio": 0.37239108436187585,
+      "metric": "principal_axis_length_major_mm",
+      "median_ratio_synthetic_over_real": 0.6890846995706309,
+      "median_diff_synthetic_minus_real": -3.8627265250038896,
+      "ks_statistic": 0.20689655172413793,
+      "cliffs_delta_synthetic_vs_real": -0.23107411811335712,
+      "interpretation": "Higher synthetic major axis indicates longer dominant morphology."
+    },
+    {
+      "rank_score_abs_log_median_ratio": 0.3285040669720361,
+      "metric": "max_diameter_bbox_mm",
+      "median_ratio_synthetic_over_real": 0.72,
+      "median_diff_synthetic_minus_real": -3.5,
+      "ks_statistic": 0.19157088122605365,
+      "cliffs_delta_synthetic_vs_real": -0.21511721789169272,
+      "interpretation": "Higher synthetic diameter indicates spatial extent larger than real at matched volume."
+    },
+    {
+      "rank_score_abs_log_median_ratio": 0.3236130241059055,
+      "metric": "aspect_ratio_major_to_minor2",
+      "median_ratio_synthetic_over_real": 0.7235301769495133,
+      "median_diff_synthetic_minus_real": -0.478391277221798,
+      "ks_statistic": 0.5977011494252874,
+      "cliffs_delta_synthetic_vs_real": -0.7256352666578588,
+      "interpretation": "Higher values indicate larger major/minor2 disparity."
+    },
+    {
+      "rank_score_abs_log_median_ratio": 0.2574110438541735,
+      "metric": "surface_to_volume_ratio",
+      "median_ratio_synthetic_over_real": 0.773050390838223,
+      "median_diff_synthetic_minus_real": -0.23730121380547953,
+      "ks_statistic": 0.20689655172413793,
+      "cliffs_delta_synthetic_vs_real": -0.2481613599330603,
+      "interpretation": "Higher synthetic ratio indicates more surface per unit volume."
+    },
+    {
+      "rank_score_abs_log_median_ratio": 0.2508079203567829,
+      "metric": "bbox_fill_fraction",
+      "median_ratio_synthetic_over_real": 1.2850632261377495,
+      "median_diff_synthetic_minus_real": 0.1068061568061568,
+      "ks_statistic": 0.5670498084291188,
+      "cliffs_delta_synthetic_vs_real": 0.6981547540406042,
+      "interpretation": "Lower synthetic fill suggests more empty bounding-box space from lollipop/stem geometry."
+    }
+  ]
+}

@@ -98,6 +98,18 @@ def test_flatten_case_metrics_preserves_report_schema(tmp_path: Path):
     assert json.loads(row["warnings"]) == ["axis warning"]
 
 
+def test_flatten_case_metrics_accepts_embedding_target_volume_key(tmp_path: Path):
+    metrics = {
+        "target_tumor_volume_mm3": 250.0,
+        "warnings": [],
+        "hard_failures": [],
+    }
+
+    row = _flatten_case_metrics(metrics, case_id="case-1", case_out_dir=tmp_path / "case-1")
+
+    assert row["target_volume_mm3"] == 250.0
+
+
 def test_batch_summary_and_failure_report_are_recoverable(tmp_path: Path):
     completed = {
         "case_id": "completed-low-confidence",
@@ -138,6 +150,32 @@ def test_batch_summary_and_failure_report_are_recoverable(tmp_path: Path):
     assert summary["strategy_disagreement_count"] == 1
     assert failures["worst_axis_error_cases"][0]["case_id"] == "completed-low-confidence"
     assert failures["exception_cases"][0]["exception_type"] == "RuntimeError"
+
+
+def test_failure_report_ignores_missing_axis_error_values(tmp_path: Path):
+    completed_with_axis = {
+        "case_id": "with-axis",
+        "case_out_dir": str(tmp_path / "with_axis"),
+        "orientation_confidence": 0.5,
+        "primary_axis_error_deg": 12.0,
+    }
+    completed_without_axis = {
+        "case_id": "without-axis",
+        "case_out_dir": str(tmp_path / "without_axis"),
+        "orientation_confidence": 0.4,
+        "primary_axis_error_deg": None,
+    }
+
+    failures = _build_failure_report([completed_without_axis, completed_with_axis], [])
+
+    assert failures["worst_axis_error_cases"] == [
+        {
+            "case_id": "with-axis",
+            "primary_axis_error_deg": 12.0,
+            "orientation_method": None,
+            "case_out_dir": str(tmp_path / "with_axis"),
+        }
+    ]
 
 
 def test_summary_csv_writes_union_schema(tmp_path: Path):

@@ -70,7 +70,7 @@ def _flatten_case_metrics(metrics: dict[str, Any], case_id: str, case_out_dir: P
         "canal_growth_scale": metrics.get("canal_growth_scale"),
         "bulb_growth_scale": metrics.get("bulb_growth_scale"),
         "t0_volume_fraction_of_seg": metrics.get("t0_volume_fraction_of_seg"),
-        "target_volume_mm3": metrics.get("target_volume_mm3"),
+        "target_volume_mm3": metrics.get("target_volume_mm3", metrics.get("target_tumor_volume_mm3")),
         "volume_target_timepoint": metrics.get("volume_target_timepoint"),
         "volume_target_timepoint_index": metrics.get("volume_target_timepoint_index"),
         "volume_target_timepoint_day": metrics.get("volume_target_timepoint_day"),
@@ -261,8 +261,9 @@ def _build_failure_report(completed_cases: list[dict[str, Any]], exception_cases
         completed_cases,
         key=lambda item: float(item.get("worst_clipping_fraction", float("inf"))),
     )
+    cases_with_axis_error = [item for item in completed_cases if item.get("primary_axis_error_deg") is not None]
     worst_axis_error = sorted(
-        completed_cases,
+        cases_with_axis_error,
         key=lambda item: float(item.get("primary_axis_error_deg", float("-inf"))),
         reverse=True,
     )

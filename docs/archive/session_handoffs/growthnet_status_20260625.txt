@@ -1,0 +1,34 @@
+On branch main
+Your branch is ahead of 'personal/main' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .gitignore
+	modified:   embed_tumor.py
+	modified:   projects/vivit/src/data/synthetic.py
+	modified:   scripts/run_batch_embedding.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	AGENTS.md
+	CLAUDE.md
+	CLAUDE_TO_CODEX_HANDOFF.md
+	data/
+	docs/GROWTHNET_LAB_MEETING_STATUS.md
+	docs/GROWTH_MORPHOLOGY_VISUALIZATION_NOTES.md
+	docs/ORIENTATION_METRIC_AUDIT.md
+	docs/real_tumor_feature_extractor.md
+	engineering_session_summary.md
+	growthnet_status_20260625.txt
+	growthnet_uncommitted_diff_20260625.patch
+	lab_meeting_exports/
+	rivanna_pull/
+	scripts/build_lab_meeting_deck.py
+	scripts/export_3d_frames.py
+	scripts/extract_real_tumor_features.py
+	scripts/generate_synthetic_lollipop_cohort.py
+	scripts/generate_synthetic_longitudinal_dataset.py
+
+no changes added to commit (use "git add" and/or "git commit -a")

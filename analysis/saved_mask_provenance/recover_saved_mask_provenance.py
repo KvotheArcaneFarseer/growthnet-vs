@@ -8,7 +8,6 @@ analysis/saved_mask_provenance and never modifies authoritative masks.
 
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 import math
@@ -27,6 +26,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.generate_synthetic_lollipop_cohort import _generate_one_mask as current_generate_one_mask  # noqa: E402
+from shared.provenance import get_git_commit, sha256_file  # noqa: E402
+from shared.reporting import markdown_table, markdown_table_from_dataframe  # noqa: E402
 
 
 OUT_DIR = REPO_ROOT / "analysis" / "saved_mask_provenance"
@@ -48,23 +49,11 @@ TRIALS_CSV = OUT_DIR / "reproduction_trials.csv"
 REPORT_MD = OUT_DIR / "SAVED_MASK_PROVENANCE_REPORT.md"
 
 
-def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        while chunk := handle.read(chunk_size):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def git_text(args: list[str]) -> str:
     try:
         return subprocess.check_output(["git", *args], cwd=REPO_ROOT, text=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         return exc.output
-
-
-def git_commit() -> str:
-    return git_text(["rev-parse", "HEAD"]).strip() or "UNKNOWN"
 
 
 def load_module(path: Path, name: str) -> Any:
@@ -152,7 +141,7 @@ def generator_variants() -> list[dict[str, Any]]:
     pulled = load_module(PULLED_GENERATOR_PATH, "pulled_generate_synthetic_lollipop_cohort")
     return [
         {
-            "candidate_commit": git_commit(),
+            "candidate_commit": get_git_commit(REPO_ROOT),
             "generator_variant": "current_worktree_generator",
             "generator_path": str(CURRENT_GENERATOR_PATH.relative_to(REPO_ROOT)),
             "generator_hash": sha256_file(CURRENT_GENERATOR_PATH),
@@ -255,12 +244,12 @@ Scope: local repository only. No SSH, Rivanna access, remote filesystem, generat
 
 ## Evidence
 
-{markdown_table(evidence)}
+{markdown_table(["Evidence", "Status", "Notes"], evidence)}
 
 ## Local File Dates And Hashes
 
 - Pulled generator script mtime is local copy metadata only and should not be treated as authoritative generation time.
-- Current git commit: `{git_commit()}`.
+- Current git commit: `{get_git_commit(REPO_ROOT)}`.
 - Manifest hash: `{sha256_file(MANIFEST_PATH)}`.
 
 ## Likely Generation Window
@@ -269,21 +258,6 @@ Local evidence points to a generation path after the lollipop prototype was intr
 """,
         encoding="utf-8",
     )
-
-
-def markdown_table(df: pd.DataFrame) -> str:
-    if df.empty:
-        return "_No rows._"
-    display = df.copy()
-    for col in display.columns:
-        if pd.api.types.is_float_dtype(display[col]):
-            display[col] = display[col].map(lambda x: "" if not np.isfinite(x) else f"{x:.6g}")
-        else:
-            display[col] = display[col].astype(str)
-    lines = ["| " + " | ".join(display.columns) + " |", "| " + " | ".join(["---"] * len(display.columns)) + " |"]
-    for rec in display.to_dict("records"):
-        lines.append("| " + " | ".join(str(rec[col]) for col in display.columns) + " |")
-    return "\n".join(lines)
 
 
 def write_history(trials: pd.DataFrame) -> None:
@@ -323,7 +297,7 @@ Generated: {datetime.now(timezone.utc).isoformat()}
 
 ## Trial Summary
 
-{markdown_table(trial_summary)}
+{markdown_table_from_dataframe(trial_summary)}
 
 ## Pulled Script Difference Note
 
@@ -369,11 +343,11 @@ Classification: `{status}`.
 
 ## Reproduction Trial Summary
 
-{markdown_table(by_variant)}
+{markdown_table_from_dataframe(by_variant)}
 
 ## Best Trial Per Case
 
-{markdown_table(best[['case_id', 'generator_variant', 'dice', 'volume_error_voxels', 'centroid_error_vox', 'bbox_iou', 'axis_error_deg']])}
+{markdown_table_from_dataframe(best[['case_id', 'generator_variant', 'dice', 'volume_error_voxels', 'centroid_error_vox', 'bbox_iou', 'axis_error_deg']])}
 
 ## Answers
 
@@ -416,7 +390,7 @@ def main() -> int:
     write_report(trials)
     provenance = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "git_commit": git_commit(),
+        "git_commit": get_git_commit(REPO_ROOT),
         "manifest": str(MANIFEST_PATH),
         "selected_cases": selected_cases(),
         "current_generator_hash": sha256_file(CURRENT_GENERATOR_PATH),

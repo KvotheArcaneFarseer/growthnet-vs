@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -59,3 +60,30 @@ def markdown_table(headers: Sequence[str], rows: Sequence[Sequence[Any]]) -> str
         cells = [str(value) for value in row]
         lines.append("| " + " | ".join(cells) + " |")
     return "\n".join(lines)
+
+
+def markdown_table_from_dataframe(dataframe: Any, float_digits: int = 6) -> str:
+    """Return a Markdown table from a pandas-like DataFrame.
+
+    The helper intentionally uses duck typing so shared reporting does not need
+    to import pandas at module import time.
+    """
+    if getattr(dataframe, "empty", False):
+        return "_No rows._"
+
+    display = dataframe.copy()
+    for column in display.columns:
+        values = display[column]
+        dtype_kind = getattr(getattr(values, "dtype", None), "kind", "")
+        if dtype_kind == "f":
+            display[column] = values.map(
+                lambda value: ""
+                if not math.isfinite(float(value))
+                else f"{float(value):.{float_digits}g}"
+            )
+        else:
+            display[column] = values.astype(str)
+
+    headers = [str(column) for column in display.columns]
+    rows = [[record[column] for column in display.columns] for record in display.to_dict("records")]
+    return markdown_table(headers, rows)

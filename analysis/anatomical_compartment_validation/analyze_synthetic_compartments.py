@@ -9,11 +9,9 @@ from the current local synthetic masks.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import math
 import os
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,6 +31,8 @@ from scripts.generate_synthetic_lollipop_cohort import (  # noqa: E402
     _grid_and_radmax_from_scale,
     _map_scale_to_lollipop_geometry,
 )
+from shared.provenance import get_git_commit, sha256_file  # noqa: E402
+from shared.reporting import markdown_table_from_dataframe  # noqa: E402
 
 
 OUT_DIR = REPO_ROOT / "analysis" / "anatomical_compartment_validation"
@@ -50,21 +50,6 @@ INVENTORY_MD = OUT_DIR / "LOCAL_ANATOMY_INVENTORY.md"
 SPEC_MD = OUT_DIR / "COMPARTMENT_METRIC_SPEC.md"
 REAL_SPEC_MD = OUT_DIR / "REAL_MASK_ACQUISITION_SPEC.md"
 REPORT_MD = OUT_DIR / "SYNTHETIC_COMPARTMENT_AUDIT.md"
-
-
-def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        while chunk := handle.read(chunk_size):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def git_commit() -> str:
-    try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
-    except Exception:
-        return "UNKNOWN"
 
 
 def classify_volume(volume_mm3: float) -> str:
@@ -91,24 +76,6 @@ def finite_summary(values: Iterable[float]) -> dict[str, float | int]:
         "min": float(np.min(arr)),
         "max": float(np.max(arr)),
     }
-
-
-def markdown_table(df: pd.DataFrame) -> str:
-    if df.empty:
-        return "_No rows._"
-    display = df.copy()
-    for col in display.columns:
-        if pd.api.types.is_float_dtype(display[col]):
-            display[col] = display[col].map(lambda x: "" if not np.isfinite(x) else f"{x:.6g}")
-        else:
-            display[col] = display[col].astype(str)
-    lines = [
-        "| " + " | ".join(display.columns) + " |",
-        "| " + " | ".join(["---"] * len(display.columns)) + " |",
-    ]
-    for record in display.to_dict("records"):
-        lines.append("| " + " | ".join(str(record[col]) for col in display.columns) + " |")
-    return "\n".join(lines)
 
 
 def lollipop_geometry_from_manifest_row(row: pd.Series) -> dict[str, float]:
@@ -414,11 +381,11 @@ Scope: local repository only. No Rivanna, SSH, or remote data were used.
 
 ## Evidence Inventory
 
-{markdown_table(rows)}
+{markdown_table_from_dataframe(rows)}
 
 ## Real Feature Spacing Evidence
 
-{markdown_table(real_spacing_summary)}
+{markdown_table_from_dataframe(real_spacing_summary)}
 
 ## What Can Be Validated Locally
 
@@ -603,7 +570,7 @@ This is a synthetic-only anatomical compartment plausibility audit. It reconstru
 - Manifest: `{MANIFEST_PATH.relative_to(REPO_ROOT)}` ({len(features)} analyzed rows)
 - Mask root: `{MASK_ROOT.relative_to(REPO_ROOT)}`
 - Synthetic features: `{SYN_FEATURES.relative_to(REPO_ROOT)}`
-- Git commit: `{git_commit()}`
+- Git commit: `{get_git_commit(REPO_ROOT)}`
 
 ## Reproducibility Commands
 
@@ -623,11 +590,11 @@ This is a synthetic-only anatomical compartment plausibility audit. It reconstru
 
 ## Summary
 
-{markdown_table(key_summary)}
+{markdown_table_from_dataframe(key_summary)}
 
 ## Flag Counts
 
-{markdown_table(flag_counts)}
+{markdown_table_from_dataframe(flag_counts)}
 
 ## Interpretation
 
@@ -690,7 +657,7 @@ def main() -> int:
     write_report(features, summary)
     provenance = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "git_commit": git_commit(),
+        "git_commit": get_git_commit(REPO_ROOT),
         "script": str(Path(__file__).resolve()),
         "script_sha256": sha256_file(Path(__file__).resolve()),
         "manifest": str(MANIFEST_PATH),

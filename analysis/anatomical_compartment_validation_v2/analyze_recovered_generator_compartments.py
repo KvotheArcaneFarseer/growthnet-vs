@@ -7,12 +7,10 @@ masks, or authoritative feature artifacts.
 
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 import math
 import os
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,6 +25,9 @@ from scipy.spatial.transform import Rotation
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+from shared.provenance import get_git_commit, sha256_file  # noqa: E402
+from shared.reporting import markdown_table_from_dataframe  # noqa: E402
 
 OUT_DIR = REPO_ROOT / "analysis" / "anatomical_compartment_validation_v2"
 OVERLAY_DIR = OUT_DIR / "overlays"
@@ -45,21 +46,6 @@ SUMMARY_CSV = OUT_DIR / "synthetic_compartment_summary_v2.csv"
 VISUAL_CSV = OUT_DIR / "visual_verification.csv"
 REPORT_MD = OUT_DIR / "SYNTHETIC_COMPARTMENT_AUDIT_V2.md"
 PROVENANCE_JSON = OUT_DIR / "provenance.json"
-
-
-def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        while chunk := handle.read(chunk_size):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def git_commit() -> str:
-    try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
-    except Exception:
-        return "UNKNOWN"
 
 
 def load_module(path: Path, name: str) -> Any:
@@ -144,21 +130,6 @@ def finite_summary(values: Iterable[float]) -> dict[str, float | int]:
         "min": float(np.min(arr)),
         "max": float(np.max(arr)),
     }
-
-
-def markdown_table(df: pd.DataFrame) -> str:
-    if df.empty:
-        return "_No rows._"
-    display = df.copy()
-    for col in display.columns:
-        if pd.api.types.is_float_dtype(display[col]):
-            display[col] = display[col].map(lambda x: "" if not np.isfinite(x) else f"{x:.6g}")
-        else:
-            display[col] = display[col].astype(str)
-    lines = ["| " + " | ".join(display.columns) + " |", "| " + " | ".join(["---"] * len(display.columns)) + " |"]
-    for record in display.to_dict("records"):
-        lines.append("| " + " | ".join(str(record[col]) for col in display.columns) + " |")
-    return "\n".join(lines)
 
 
 def regenerate_mask(row: pd.Series) -> np.ndarray:
@@ -643,7 +614,7 @@ The current checked-in generator was not used to reconstruct historical compartm
 
 All 10 representative provenance cases passed Dice >= 0.999 before full analysis.
 
-{markdown_table(preflight)}
+{markdown_table_from_dataframe(preflight)}
 
 ## Cohort Summary
 
@@ -657,23 +628,23 @@ All 10 representative provenance cases passed Dice >= 0.999 before full analysis
 
 ## Key Distributions
 
-{markdown_table(key_summary)}
+{markdown_table_from_dataframe(key_summary)}
 
 ## Prior Finding Comparison
 
-{markdown_table(prior)}
+{markdown_table_from_dataframe(prior)}
 
 ## Flag Counts
 
-{markdown_table(flag_counts)}
+{markdown_table_from_dataframe(flag_counts)}
 
 ## Visual Verification
 
 Fresh stratified cases reviewed: {len(visual)}.
 
-{markdown_table(visual_counts)}
+{markdown_table_from_dataframe(visual_counts)}
 
-{markdown_table(visual[['case_id', 'volume_bin', 'bulb_fraction', 'stem_fraction', 'unassigned_fraction', 'classification', 'overlay_path']])}
+{markdown_table_from_dataframe(visual[['case_id', 'volume_bin', 'bulb_fraction', 'stem_fraction', 'unassigned_fraction', 'classification', 'overlay_path']])}
 
 ## Scientific Interpretation
 
@@ -708,7 +679,7 @@ def main() -> int:
     write_report(preflight, features, summary, visual)
     provenance = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "git_commit": git_commit(),
+        "git_commit": get_git_commit(REPO_ROOT),
         "manifest_path": str(MANIFEST_PATH.relative_to(REPO_ROOT)),
         "manifest_sha256": sha256_file(MANIFEST_PATH),
         "mask_root": str(MASK_ROOT.relative_to(REPO_ROOT)),

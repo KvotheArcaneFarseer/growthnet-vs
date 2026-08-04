@@ -3,7 +3,14 @@ from pathlib import Path
 import pytest
 
 from shared.provenance import get_git_commit, sha256_file
-from shared.reporting import markdown_table, union_fieldnames, write_csv_rows, write_json, write_text
+from shared.reporting import (
+    markdown_table,
+    markdown_table_from_dataframe,
+    union_fieldnames,
+    write_csv_rows,
+    write_json,
+    write_text,
+)
 
 
 pytestmark = pytest.mark.fast
@@ -59,4 +66,21 @@ def test_markdown_table_is_deterministic():
         "| File | Verdict |\n"
         "| --- | --- |\n"
         "| a.py | KEEP |"
+    )
+
+
+def test_markdown_table_from_dataframe_formats_floats():
+    pd = pytest.importorskip("pandas")
+    frame = pd.DataFrame(
+        [
+            {"case_id": "a", "value": 1.23456789},
+            {"case_id": "b", "value": float("nan")},
+        ]
+    )
+
+    assert markdown_table_from_dataframe(frame) == (
+        "| case_id | value |\n"
+        "| --- | --- |\n"
+        "| a | 1.23457 |\n"
+        "| b |  |"
     )

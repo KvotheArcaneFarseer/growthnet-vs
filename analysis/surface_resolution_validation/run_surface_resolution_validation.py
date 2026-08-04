@@ -10,11 +10,9 @@ available local real feature table.
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import math
 import os
-import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -43,6 +41,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 from scripts.extract_real_tumor_features import _extract_one  # noqa: E402
+from shared.provenance import get_git_commit, sha256_file  # noqa: E402
+from shared.reporting import markdown_table_from_dataframe  # noqa: E402
 
 
 SYN_FEATURES = REPO_ROOT / "analysis" / "synthetic_features_v2" / "synthetic_features_v2.csv"
@@ -80,21 +80,6 @@ VOLUME_BINS = [
 ]
 
 
-def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        while chunk := handle.read(chunk_size):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def git_commit() -> str:
-    try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
-    except Exception:
-        return "UNKNOWN"
-
-
 def summarize(values: Iterable[float]) -> dict[str, float | int]:
     arr = np.asarray(list(values), dtype=float)
     arr = arr[np.isfinite(arr)]
@@ -110,25 +95,6 @@ def summarize(values: Iterable[float]) -> dict[str, float | int]:
         "p75": p75,
         "mean": float(np.mean(arr)),
     }
-
-
-def markdown_table(df: pd.DataFrame) -> str:
-    if df.empty:
-        return "_No rows._"
-    display = df.copy()
-    for col in display.columns:
-        if pd.api.types.is_float_dtype(display[col]):
-            display[col] = display[col].map(lambda x: "" if not np.isfinite(x) else f"{x:.6g}")
-        else:
-            display[col] = display[col].astype(str)
-    headers = list(display.columns)
-    lines = [
-        "| " + " | ".join(headers) + " |",
-        "| " + " | ".join(["---"] * len(headers)) + " |",
-    ]
-    for row in display.to_dict("records"):
-        lines.append("| " + " | ".join(str(row[col]) for col in headers) + " |")
-    return "\n".join(lines)
 
 
 def classify_volume(volume_mm3: float) -> str:
@@ -348,7 +314,7 @@ def normalized_comparison(real: pd.DataFrame, syn_native: pd.DataFrame, experime
 
 
 def write_metric_definition_audit(real: pd.DataFrame) -> None:
-    spacing_summary = markdown_table(real[["voxel_spacing_mm_x", "voxel_spacing_mm_y", "voxel_spacing_mm_z"]].describe().reset_index())
+    spacing_summary = markdown_table_from_dataframe(real[["voxel_spacing_mm_x", "voxel_spacing_mm_y", "voxel_spacing_mm_z"]].describe().reset_index())
     SURFACE_AUDIT.write_text(
         f"""# Surface Metric Definition Audit
 
@@ -356,7 +322,7 @@ Generated: {datetime.now(timezone.utc).isoformat()}
 
 ## Implementation
 
-The current extractor is `{EXTRACTOR_PATH.relative_to(REPO_ROOT)}` at git commit `{git_commit()}`.
+The current extractor is `{EXTRACTOR_PATH.relative_to(REPO_ROOT)}` at git commit `{get_git_commit(REPO_ROOT)}`.
 
 - Surface area is computed in `_surface_area_mm2`.
 - `skimage.measure.marching_cubes` is used on the largest connected component only.
@@ -438,8 +404,8 @@ def write_report(
     sensitivity_table = surface_all[
         ["condition", "metric", "n", "median_percent_change", "median_absolute_percent_change", "iqr_percent_change", "sensitivity_class"]
     ]
-    sensitivity_table_md = markdown_table(sensitivity_table)
-    normalized_table_md = markdown_table(normalized)
+    sensitivity_table_md = markdown_table_from_dataframe(sensitivity_table)
+    normalized_table_md = markdown_table_from_dataframe(normalized)
 
     def classification(metric: str) -> str:
         row_05 = surface_all[(surface_all["condition"] == "real_like_0p5_iso") & (surface_all["metric"] == metric)]
@@ -461,7 +427,7 @@ def write_report(
         return "REQUIRES_MORE_DATA"
 
     suitability_rows = [{"metric": metric, "recommended_use": classification(metric)} for metric in SURFACE_METRICS]
-    suitability_table_md = markdown_table(pd.DataFrame(suitability_rows))
+    suitability_table_md = markdown_table_from_dataframe(pd.DataFrame(suitability_rows))
     compactness_row = normalized[normalized["metric"] == "compactness"].iloc[0].to_dict()
     sphericity_row = normalized[normalized["metric"] == "sphericity"].iloc[0].to_dict()
 
@@ -481,7 +447,7 @@ This local-only analysis tests whether surface-sensitive real-vs-synthetic morph
 - Real features: `{REAL_FEATURES.relative_to(REPO_ROOT)}` ({len(real)} rows)
 - Selected controlled subset: {len(selected)} cases
 - Selected bins: {selected['volume_bin'].value_counts().to_dict()}
-- Git commit: `{git_commit()}`
+- Git commit: `{get_git_commit(REPO_ROOT)}`
 - Extractor hash: `{sha256_file(EXTRACTOR_PATH)}`
 
 ## Metric Definitions
@@ -561,7 +527,7 @@ def main() -> None:
     write_report(syn, real, selected, validation, sensitivity, normalized)
     metadata = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "git_commit": git_commit(),
+        "git_commit": get_git_commit(REPO_ROOT),
         "extractor_path": str(EXTRACTOR_PATH),
         "extractor_sha256": sha256_file(EXTRACTOR_PATH),
         "synthetic_features": str(SYN_FEATURES),

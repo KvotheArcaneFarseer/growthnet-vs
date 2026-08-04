@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 import math
 import os
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,12 +38,13 @@ from analysis.anatomical_compartment_validation.analyze_synthetic_compartments i
     lollipop_geometry_from_manifest_row,
     lollipop_phase_state,
     local_lollipop_coordinates,
-    markdown_table,
 )
 from scripts.generate_synthetic_lollipop_cohort import (  # noqa: E402
     _generate_one_mask,
     _grid_and_radmax_from_scale,
 )
+from shared.provenance import get_git_commit  # noqa: E402
+from shared.reporting import markdown_table_from_dataframe  # noqa: E402
 
 import matplotlib  # noqa: E402
 
@@ -56,13 +56,6 @@ MANIFEST_PATH = REPO_ROOT / "rivanna_pull" / "analysis" / "synthetic_lollipop_v1
 COMPARTMENT_FEATURES = REPO_ROOT / "analysis" / "anatomical_compartment_validation" / "synthetic_compartment_features.csv"
 CASE_CSV = OUT_DIR / "case_verification.csv"
 REPORT_MD = OUT_DIR / "COMPARTMENT_MAPPING_VERIFICATION.md"
-
-
-def git_commit() -> str:
-    try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
-    except Exception:
-        return "UNKNOWN"
 
 
 def dice(a: np.ndarray, b: np.ndarray) -> float:
@@ -290,11 +283,11 @@ The selection includes zero-bulb cases, low nonzero bulb-fraction cases, high no
 
 ## Verification Table
 
-{markdown_table(selected_rows)}
+{markdown_table_from_dataframe(selected_rows)}
 
 ## Classification Counts
 
-{markdown_table(class_counts)}
+{markdown_table_from_dataframe(class_counts)}
 
 ## Main Checks
 
@@ -339,7 +332,7 @@ def main() -> int:
     write_report(results, selected)
     provenance = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "git_commit": git_commit(),
+        "git_commit": get_git_commit(REPO_ROOT),
         "manifest_path": str(MANIFEST_PATH),
         "compartment_features_path": str(COMPARTMENT_FEATURES),
         "selected_cases": selected,

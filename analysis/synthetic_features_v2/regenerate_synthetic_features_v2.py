@@ -10,7 +10,6 @@ geometry or legacy pulled feature tables.
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import math
 import subprocess
@@ -26,6 +25,11 @@ from scipy.ndimage import label as ndi_label
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from shared.provenance import get_git_commit, sha256_file  # noqa: E402
+
 OUT_DIR = REPO_ROOT / "analysis" / "synthetic_features_v2"
 MANIFEST_PATH = REPO_ROOT / "rivanna_pull" / "analysis" / "synthetic_lollipop_v1" / "manifests" / "synthetic_lollipop_manifest.csv"
 MASK_ROOT = REPO_ROOT / "rivanna_pull" / "analysis" / "synthetic_lollipop_v1" / "masks"
@@ -38,29 +42,6 @@ SUMMARY_JSON = OUT_DIR / "extraction_summary.json"
 PROVENANCE_JSON = OUT_DIR / "provenance.json"
 INTEGRITY_REPORT = OUT_DIR / "FEATURE_INTEGRITY_REPORT.md"
 SCHEMA_VERSION = "synthetic_features_v2_current_extractor_2026-07-18"
-
-
-def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        while True:
-            chunk = handle.read(chunk_size)
-            if not chunk:
-                break
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def git_commit() -> str:
-    try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "HEAD"],
-            cwd=REPO_ROOT,
-            text=True,
-            stderr=subprocess.DEVNULL,
-        ).strip()
-    except Exception:
-        return "UNKNOWN"
 
 
 def read_manifest() -> pd.DataFrame:
@@ -286,7 +267,7 @@ def write_provenance(preflight_df: pd.DataFrame, preflight_summary: dict[str, An
     payload = {
         "schema_version": SCHEMA_VERSION,
         "extraction_timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "git_commit_hash": git_commit(),
+        "git_commit_hash": get_git_commit(REPO_ROOT),
         "extractor_script_path": str(EXTRACTOR_PATH.relative_to(REPO_ROOT)),
         "extractor_sha256": sha256_file(EXTRACTOR_PATH),
         "manifest_path": str(MANIFEST_PATH.relative_to(REPO_ROOT)),

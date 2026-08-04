@@ -1,14 +1,59 @@
 # Local Reproducibility
 
-Last updated: 2026-07-18
+Last updated: 2026-08-04
 
 Scope: local laptop repository only. These commands do not require SSH, Rivanna, SLURM, or remote datasets when run as written, except where explicitly marked as requiring user-supplied local NIfTI files.
 
 ## Environment Notes
 
-The repository does not currently include a root `requirements.txt`, lockfile, or conda environment for the embedding work. The local scripts import packages such as `numpy`, `scipy`, `matplotlib`, `nibabel`, `scikit-image`, and, through `projects/vivit/src/data/synthetic.py`, MONAI. The MRI registration project has a separate heavier dependency stack involving ANTs/ANTsPyNet/TensorFlow.
+The repository now includes a root `pyproject.toml` for the local GrowthNet
+development environment. The default dependencies cover the fast local
+embedding, synthetic generation, feature extraction, and ViViT data-adapter
+tests. Heavier stacks are separated into optional extras:
 
-The active audit environment did not have `pytest` installed. Use `python3 -m py_compile` as a dependency-light syntax/import check, and run pytest in an environment where the test dependencies are installed.
+- `.[dev]` for pytest.
+- `.[registration]` for MRI registration dependencies such as ANTsPyNet and
+  TensorFlow.
+- `.[training]` for training helpers such as Accelerate.
+- `.[presentations]` for deck/export helpers.
+
+The previously validated local environment is `.venv`, which has pytest
+available. The system `python3` on this laptop may not.
+
+Create or refresh a local editable environment:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -e ".[dev]"
+```
+
+Capture an environment freeze for a reviewed run:
+
+```bash
+mkdir -p projects/growthnet/configs/env
+.venv/bin/python -m pip freeze > projects/growthnet/configs/env/growthnet_env_local_$(date +%Y_%m_%d)_pip_freeze.txt
+```
+
+Commit freeze files only when they represent a reviewed project environment,
+not every scratch environment change.
+
+## CI
+
+The repository includes a minimal GitHub Actions workflow:
+
+```text
+.github/workflows/fast-tests.yml
+```
+
+It installs `.[dev]`, compiles core scripts, and runs:
+
+```bash
+python -m pytest -m "fast and not slow" -v
+```
+
+The workflow is laptop-safe by design: it does not access Rivanna, download
+datasets, run SLURM, or generate expensive cohorts.
 
 ## Fast Local Checks
 
@@ -33,7 +78,7 @@ PYTHONPYCACHEPREFIX=/tmp/growthnet_pycache MPLCONFIGDIR=/tmp/growthnet_mpl pytho
 Run only fast tests:
 
 ```bash
-PYTHONPYCACHEPREFIX=/tmp/growthnet_pycache MPLCONFIGDIR=/tmp/growthnet_mpl python3 -m pytest tests -m fast -q
+PYTHONPYCACHEPREFIX=/tmp/growthnet_pycache MPLCONFIGDIR=/tmp/growthnet_mpl .venv/bin/python -m pytest -m "fast and not slow" -v
 ```
 
 Run integration-marked tests:
@@ -135,7 +180,9 @@ python3 scripts/extract_real_tumor_features.py \
 
 ## Longitudinal MVP
 
-The wrapper consumes explicit target volumes. It does not infer clinical growth trajectories.
+By default, the wrapper consumes explicit target volumes from the timeline CSV.
+It can also generate experimental scenario-based target volumes, but those modes
+are simulation controls and are not clinically validated growth predictors.
 
 Example timeline:
 
@@ -162,7 +209,32 @@ python3 scripts/generate_synthetic_longitudinal_dataset.py \
   --volume_max_iterations 3
 ```
 
-Expected outputs are `metadata.csv`, `qc_summary.csv`, `images/`, and `masks/`.
+Optional scenario/variant smoke:
+
+```bash
+python3 scripts/generate_synthetic_longitudinal_dataset.py \
+  --timeline_csv data/timelines/local_longitudinal_example.csv \
+  --background_csv /absolute/path/to/local_backgrounds.csv \
+  --out_dir /tmp/growthnet_longitudinal_variants \
+  --seed 20260523 \
+  --gen_size 64 \
+  --volume_max_iterations 3 \
+  --clinical_growth_law scenario_mixture_v1 \
+  --variants_per_timepoint 2
+```
+
+Expected outputs are `metadata.csv`, `qc_summary.csv`,
+`longitudinal_qc_summary.csv`, `images/`, and `masks/`. Metadata records
+`growth_law_scenario`, `variant_id`, and `variant_seed` for auditability.
+
+Measure same-timepoint variant diversity after a multi-variant run:
+
+```bash
+python3 analysis/clinical_growth_law_validation/measure_variant_diversity.py \
+  --metadata_csv /tmp/growthnet_longitudinal_variants/metadata.csv \
+  --out_csv /tmp/growthnet_longitudinal_variants/variant_diversity.csv \
+  --out_report /tmp/growthnet_longitudinal_variants/VARIANT_DIVERSITY.md
+```
 
 ## Local Analysis Reproduction
 

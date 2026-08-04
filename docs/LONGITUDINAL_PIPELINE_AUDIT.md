@@ -2,7 +2,7 @@
 
 Task: LONG-001  
 Scope: local laptop repository only  
-Date: 2026-07-18
+Date: 2026-08-01
 
 ## Summary
 
@@ -22,6 +22,9 @@ This audit did not modify the embedding engine, tumor geometry, or growth model.
    - `--volume_ravd_tolerance`
    - `--volume_max_iterations`
    - `--gen_size`
+   - `--provenance_json`
+   - `--clinical_growth_law`
+   - `--visit_days`
 2. `generate_longitudinal_dataset()` reads timeline rows requiring:
    - `patient_id`
    - `background_mri_id`
@@ -70,7 +73,10 @@ This audit did not modify the embedding engine, tumor geometry, or growth model.
 - Background image consistency is intended by using one `background_mri_id`, but the code does not currently record source `mri_path` and `seg_path` in `metadata.csv`.
 - Requested versus achieved volume is evaluated per visit, but longitudinal trend checks are not implemented.
 - The wrapper does not compute monotonicity, centroid drift, axis drift, or intensity consistency across visits.
-- Metadata does not include seed, generation parameters, source background paths, or embedding metrics JSON paths.
+- Metadata now includes visit seed, source background paths, embedding growth mode, volume tolerance, max iterations, and generation size.
+- Optional dataset-level provenance JSON is available via `--provenance_json`.
+- Optional experimental target-volume generation is available via `--clinical_growth_law empirical_vs_v1`; default `none` preserves explicit `T1..T4` CSV volumes.
+- Metadata does not yet include embedding metrics JSON paths.
 - There is no ViViT-compatible split/layout export from this wrapper.
 - There is no locally validated end-to-end run unless a local background manifest with readable NIfTI MRI and segmentation files is supplied.
 
@@ -90,6 +96,8 @@ The new tests in `tests/test_longitudinal_dataset_audit.py` cover:
 - patient/timepoint failure rows when background data is missing
 - metadata and QC output behavior with the heavy embedding call monkeypatched
 - deterministic per-visit seed routing into the embedding call
+- optional longitudinal provenance payload construction
+- additive metadata fields for visit seed, source paths, embedding growth mode, and generation parameters
 
 These tests do not require Rivanna, private Downloads files, SLURM, or real MRI data.
 
@@ -125,12 +133,15 @@ This command is intentionally not run by the test suite because local MRI/segmen
 | Task ID | Status | Objective | Files Likely Involved | Validation |
 |---|---|---|---|---|
 | LONG-002 | NOT_STARTED | Add support for sparse/irregular visits with explicit `timepoint`, `day`, and `target_volume_mm3` rows. | `scripts/generate_synthetic_longitudinal_dataset.py`, tests | unit tests for sorting and sparse constraints |
-| LONG-003 | NOT_STARTED | Add seed and generation parameters to `metadata.csv`. | wrapper, tests | metadata schema test |
-| LONG-004 | NOT_STARTED | Record source background MRI/seg paths or immutable IDs in metadata for auditability. | wrapper, tests | metadata schema test |
+| LONG-003 | COMPLETE | Add seed and generation parameters to `metadata.csv`. | wrapper, tests | metadata schema test |
+| LONG-004 | COMPLETE | Record source background MRI/seg paths or immutable IDs in metadata for auditability. | wrapper, tests | metadata schema test |
 | LONG-005 | NOT_STARTED | Add longitudinal QC for monotonicity, centroid drift, axis drift, and intensity consistency. | wrapper or QC helper, tests | synthetic pass/fail fixtures |
 | LONG-006 | NOT_STARTED | Add an optional ViViT-compatible export layout and split manifest. | wrapper, `projects/vivit/src/data/temporal_loader.py` adapter docs | loader smoke test |
 | LONG-007 | BLOCKED_REMOTE_DATA | Validate end-to-end behavior over real curated longitudinal backgrounds. | local or future remote manifests | cohort-level QC report |
 | LONG-008 | HUMAN_REVIEW_REQUIRED | Decide acceptable interpretation of `stable` and `growing` labels in synthetic-only datasets. | docs and config | clinical/scientific review |
+| LONG-009 | COMPLETE | Add optional dataset-level provenance JSON. | wrapper, tests | focused longitudinal tests |
+| LONG-010 | COMPLETE | Encode default-off empirical vestibular schwannoma volumetric growth-law candidate. | wrapper, tests, docs | focused tests and no-MRI smoke |
+| LONG-011 | NOT_STARTED | Validate or recalibrate growth-law parameters against real longitudinal masks. | analysis docs and future real data | real-data validation report |
 
 ## Definition Of Done For LONG-001
 

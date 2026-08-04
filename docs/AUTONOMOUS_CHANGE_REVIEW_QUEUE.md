@@ -20,6 +20,14 @@ Last updated: 2026-07-18
 | Longitudinal MVP semantics | `scripts/generate_synthetic_longitudinal_dataset.py` | KEEP_WITH_FOLLOWUP | Add invalid-volume and duplicate-patient handling; do not claim continuous trajectories. | yes for label semantics |
 | Lollipop cohort manifest provenance | `scripts/generate_synthetic_lollipop_cohort.py` | KEEP_WITH_FOLLOWUP | Add spacing/canal-axis/tolerance/convergence/collision provenance before authoritative use. | yes |
 
-## Blocked Validation
+## Test Validation
 
-`python3 -m pytest ...` remains blocked because `pytest` is not installed in the active Python 3.9.6 environment. No dependency installation was performed.
+System `python3` does not have pytest installed, but the repo-local `.venv` does.
+
+Validated command:
+
+```bash
+.venv/bin/python -m pytest -m "fast and not slow" -v
+```
+
+Result: 39 passed, 9 deselected, 14 Matplotlib/PyParsing dependency deprecation warnings. No GrowthNet test failures.

@@ -1,47 +1,35 @@
 # Volume Targeting Validation Report
 
-Task: VOL-001  
-Scope: local standalone lollipop mask generator only  
-Repository state: current dirty worktree as of 2026-07-18  
+Task: local standalone volume-targeting benchmark
+Scope: standalone lollipop mask generator only
+Run date: 2026-07-18
+Repository state: local worktree; no source behavior modified
 
-## Summary
+## Benchmark Setup
 
-This benchmark quantified the current local behavior of the standalone synthetic
-lollipop generator path used by `scripts/generate_synthetic_lollipop_cohort.py`.
-No core generator, embedding, script, test, or documentation files were modified.
+I inspected `analysis/volume_targeting/run_volume_targeting_benchmark.py` before
+running it. The script imports generator helpers from
+`scripts/generate_synthetic_lollipop_cohort.py`, runs local calibration cases,
+writes a CSV via `--out_csv`, and writes two plots beside that CSV:
 
-The benchmark generated 36 local calibration cases:
+- `requested_vs_achieved.png`
+- `ravd_by_target_volume.png`
 
-- target volumes: 25, 50, 75, 100, 250, 500, 1000, 4000, and 16000 mm3
-- seeds: 20260426 and 20260427
-- spacings: 1.0 x 1.0 x 1.0 mm and 0.6 x 0.6 x 1.2 mm
-- tolerance: 3% relative absolute volume difference (RAVD)
-- max calibration iterations: 14
+Confirmed CLI arguments:
 
-Overall result:
+- `--out_csv`
+- `--targets`
+- `--seeds`
+- `--spacings`
+- `--tolerance_frac`
+- `--max_iters`
+- `--min_scale_vox`
+- `--max_scale_vox`
 
-- 36/36 cases completed without exceptions.
-- 30/36 cases met the 3% RAVD tolerance.
-- Median RAVD was 1.64%.
-- Mean RAVD was 2.14%.
-- Maximum RAVD was 8.00%.
-- No generated mask touched the generation-grid boundary.
-- All generated masks were single connected components.
-- Local scale-curve probes were monotonic for all cases.
-
-## Deliverables
-
-- `analysis/volume_targeting/run_volume_targeting_benchmark.py`
-- `analysis/volume_targeting/volume_targeting_benchmark.csv`
-- `analysis/volume_targeting/requested_vs_achieved.png`
-- `analysis/volume_targeting/ravd_by_target_volume.png`
-- `analysis/volume_targeting/_smoke_volume_targeting_benchmark.csv`
-
-The `_smoke_...csv` file is a preliminary 3-case run kept for auditability.
-
-## Command
+Command run:
 
 ```bash
+MPLCONFIGDIR=/tmp/growthnet_volume_targeting_mplconfig \
 python3 analysis/volume_targeting/run_volume_targeting_benchmark.py \
   --targets 25,50,75,100,250,500,1000,4000,16000 \
   --seeds 20260426,20260427 \
@@ -49,156 +37,184 @@ python3 analysis/volume_targeting/run_volume_targeting_benchmark.py \
   --out_csv analysis/volume_targeting/volume_targeting_benchmark.csv
 ```
 
-Smoke command:
+The run completed successfully and reported that it wrote:
 
-```bash
-python3 analysis/volume_targeting/run_volume_targeting_benchmark.py \
-  --targets 25,250,2500 \
-  --seeds 20260426 \
-  --spacings '1,1,1' \
-  --out_csv analysis/volume_targeting/_smoke_volume_targeting_benchmark.csv
-```
+- `analysis/volume_targeting/volume_targeting_benchmark.csv`
+- `analysis/volume_targeting/requested_vs_achieved.png`
+- `analysis/volume_targeting/ravd_by_target_volume.png`
 
-## Results By Target Volume
+Matplotlib/fontconfig emitted cache-directory warnings during plotting, but the
+benchmark process exited with code 0 and both plot writes were reported
+successful. No benchmark case emitted generator warnings in the CSV.
 
-| Target mm3 | Cases | Median RAVD | Max RAVD | Median abs error mm3 | Cases <=3% |
-|---:|---:|---:|---:|---:|---:|
-| 25 | 4 | 5.34% | 8.00% | 1.34 | 1/4 |
-| 50 | 4 | 2.18% | 6.00% | 1.09 | 3/4 |
-| 75 | 4 | 3.99% | 6.67% | 3.00 | 2/4 |
-| 100 | 4 | 0.33% | 1.95% | 0.33 | 4/4 |
-| 250 | 4 | 1.12% | 2.71% | 2.81 | 4/4 |
-| 500 | 4 | 1.64% | 2.60% | 8.19 | 4/4 |
-| 1000 | 4 | 0.82% | 1.37% | 8.24 | 4/4 |
-| 4000 | 4 | 1.92% | 2.49% | 76.82 | 4/4 |
-| 16000 | 4 | 1.30% | 1.98% | 207.90 | 4/4 |
+## Overall Result
 
-## Results By Spacing
+The benchmark generated 36 local calibration cases:
 
-| Spacing mm | Cases | Median RAVD | Max RAVD | Cases <=3% |
+- targets: 25, 50, 75, 100, 250, 500, 1000, 4000, 16000 mm3
+- seeds: 20260426 and 20260427
+- spacings: 1.0 x 1.0 x 1.0 mm and 0.6 x 0.6 x 1.2 mm
+- tolerance: 3% relative absolute volume difference (RAVD)
+- max calibration iterations: 14
+
+Summary:
+
+- 36/36 cases completed with `status=OK`.
+- 30/36 cases converged within 3% RAVD.
+- Median RAVD: 1.64%.
+- Mean RAVD: 2.14%.
+- Maximum RAVD: 8.00%.
+- Median absolute error: 3.00 mm3.
+- Maximum absolute error: 316.00 mm3.
+- No masks touched the generation-grid boundary.
+- All masks were single connected components.
+- No local scale-curve non-monotonicity was observed.
+- Plateau behavior was flagged in 30/36 cases.
+
+## Results By Target
+
+| Target mm3 | Cases | Converged <=3% | Median RAVD | Max RAVD | Median abs error mm3 | Max abs error mm3 | Max iters | Plateau flags |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 25 | 4 | 1/4 | 5.34% | 8.00% | 1.34 | 2.00 | 14 | 4 |
+| 50 | 4 | 3/4 | 2.18% | 6.00% | 1.09 | 3.00 | 14 | 4 |
+| 75 | 4 | 2/4 | 3.99% | 6.67% | 3.00 | 5.00 | 14 | 4 |
+| 100 | 4 | 4/4 | 0.33% | 1.95% | 0.33 | 1.95 | 6 | 4 |
+| 250 | 4 | 4/4 | 1.12% | 2.71% | 2.81 | 6.78 | 6 | 4 |
+| 500 | 4 | 4/4 | 1.64% | 2.60% | 8.19 | 13.00 | 6 | 4 |
+| 1000 | 4 | 4/4 | 0.82% | 1.37% | 8.24 | 13.74 | 6 | 3 |
+| 4000 | 4 | 4/4 | 1.92% | 2.49% | 76.82 | 99.68 | 6 | 1 |
+| 16000 | 4 | 4/4 | 1.30% | 1.98% | 207.90 | 316.00 | 5 | 2 |
+
+## Stratified Interpretation
+
+### <100 mm3
+
+Cases: 12
+Converged within 3% RAVD: 6/12
+Median RAVD: 3.33%
+Mean RAVD: 4.02%
+Maximum RAVD: 8.00%
+Median absolute error: 1.57 mm3
+Maximum absolute error: 5.00 mm3
+Median iterations: 11.5
+Maximum iterations: 14
+
+Interpretation: this band is limited by voxel quantization and discrete mask
+plateaus. The failed cases are small in absolute terms, but RAVD is unstable at
+these targets. All <100 mm3 cases had plateau flags, no clipping, no component
+failures, no warnings, and no local non-monotonicity. The calibration frequently
+used the full 14 iterations.
+
+### 100-1000 mm3
+
+Cases: 16
+Converged within 3% RAVD: 16/16
+Median RAVD: 1.00%
+Mean RAVD: 1.07%
+Maximum RAVD: 2.71%
+Median absolute error: 2.48 mm3
+Maximum absolute error: 13.74 mm3
+Median iterations: 6
+Maximum iterations: 6
+
+Interpretation: this is the strongest operating band in the representative
+benchmark. Every case passed the 3% RAVD criterion, with no clipping, no
+component failures, no warnings, and no local non-monotonicity. Plateau flags
+still appeared in 15/16 diagnostic local scale probes, but they did not prevent
+convergence.
+
+### >1000 mm3
+
+Cases: 8
+Converged within 3% RAVD: 8/8
+Median RAVD: 1.45%
+Mean RAVD: 1.44%
+Maximum RAVD: 2.49%
+Median absolute error: 96.66 mm3
+Maximum absolute error: 316.00 mm3
+Median iterations: 5
+Maximum iterations: 6
+
+Interpretation: all large-volume cases passed 3% RAVD. Absolute errors are
+larger because the requested volumes are larger, but relative targeting remained
+inside the benchmark tolerance. No clipping, component failures, warnings, or
+local non-monotonicity were observed. Plateau flags were uncommon here, 3/8
+cases, and were not associated with failure.
+
+## Spacing Notes
+
+| Spacing mm | Cases | Converged <=3% | Median RAVD | Max RAVD |
 |---|---:|---:|---:|---:|
-| 1.0 x 1.0 x 1.0 | 18 | 1.55% | 8.00% | 13/18 |
-| 0.6 x 0.6 x 1.2 | 18 | 1.76% | 6.69% | 17/18 |
+| 1.0 x 1.0 x 1.0 | 18 | 13/18 | 1.55% | 8.00% |
+| 0.6 x 0.6 x 1.2 | 18 | 17/18 | 1.76% | 6.69% |
 
-The anisotropic test spacing did not degrade median accuracy in this small grid.
-It actually improved the tiny-volume pass rate because the voxel volume is
-0.432 mm3 instead of 1.0 mm3, reducing quantization error.
+The anisotropic spacing did not degrade this benchmark. Its smaller voxel volume
+of 0.432 mm3 improved tiny-volume quantization relative to 1.0 mm3 voxels in
+some cases.
 
-## Supported Local Operating Range
+## Clipping, Plateau, And Directionality
 
-Based on this benchmark, the standalone local generator is well supported for
-targets at or above 100 mm3 under the tested spacing regimes:
+- Clipped to generation grid: 0/36.
+- Component count not equal to 1: 0/36.
+- Local scale-curve non-monotonicity: 0/36.
+- Local scale-curve plateau flag: 30/36.
+- Overshoot: 18/36.
+- Undershoot: 16/36.
+- Exact hit: 2/36.
 
-- 100 to 16000 mm3: 28/28 cases met the 3% RAVD tolerance.
-- 25 to 75 mm3: 6/12 cases met the 3% RAVD tolerance.
+The plateau flag is a diagnostic from a coarse local scale probe, not direct
+evidence that final calibration failed. In this run it mainly reflects discrete
+voxelization at small scales. It is most relevant below 100 mm3, where it
+coincides with higher iteration counts and the observed 3% RAVD failures.
 
-The small-volume failures are not large absolute misses. They are dominated by
-voxel quantization:
+## Threshold Recommendations
 
-- 25 mm3 failures missed by 1 to 2 mm3 for 1 mm isotropic masks, which is still
-  4% to 8% RAVD.
-- 50 and 75 mm3 failures similarly missed by only a few mm3.
+### ENGINEERING_SMOKE_THRESHOLD
 
-Recommended local interpretation:
+Purpose: catch obvious local regressions in the standalone generator quickly.
+This is an engineering gate, not a scientific validity claim.
 
-- >=100 mm3: use 3% RAVD as the normal acceptance threshold for standalone mask
-  generation.
-- 50 to <100 mm3: use 3% RAVD as a warning threshold and allow case review when
-  absolute error is <=3 mm3.
-- <50 mm3: use an absolute-error-aware threshold; 3% RAVD alone is too strict
-  for 1 mm3 voxel quantization.
+Recommended smoke criteria for this benchmark shape:
 
-## Overshoot, Undershoot, Plateaus, And Monotonicity
+- For target volumes >=100 mm3: pass if RAVD <=3%.
+- For target volumes <100 mm3: pass if RAVD <=8% and absolute error <=5 mm3.
+- For any target: fail if `status` is not `OK`.
+- For any target: fail if the mask has zero voxels, touches the generation grid,
+  or has component count other than 1.
+- For any target: fail/review if local scale-curve non-monotonicity appears.
+- Plateau flags alone should warn, not fail, unless paired with excessive error
+  or max-iteration non-convergence.
 
-Across the 36 final benchmark cases:
+Rationale: this benchmark shows clean behavior at and above 100 mm3. Below
+100 mm3, 3% RAVD is too strict for smoke testing because 1-5 mm3 absolute misses
+can exceed 3% solely from voxel quantization.
 
-- Overshoot: 18 cases.
-- Undershoot: 16 cases.
-- Exact hit: 2 cases.
-- Local scale-curve non-monotonicity: 0 cases.
-- Local scale-curve plateau flag: 30 cases.
+### SCIENTIFIC_ACCEPTANCE_THRESHOLD
 
-The plateau flag is expected and should be interpreted carefully. It comes from
-a coarse local scale probe around the initial search window and mostly reflects
-discrete voxelization at low scale values, where several neighboring scale
-settings can produce the same tiny mask volume. It was not associated with
-failed generation-grid clipping or disconnected masks in this run.
+Purpose: support a scientific claim about clinically meaningful volume
+targeting. This benchmark is insufficient for that threshold.
 
-## Historical Local Evidence
+Evidence is insufficient to set a final scientific acceptance threshold because
+this run covers only the standalone mask generator, two seeds, two spacings, and
+36 cases. It does not exercise embedded placement, patient-frame clipping,
+image interpolation, full MRI spacing distributions, or a full cohort.
 
-The repository also contains a pulled historical synthetic manifest at
-`rivanna_pull/analysis/synthetic_lollipop_v1/manifests/synthetic_lollipop_manifest.csv`.
-That file has 261 rows with target and realized volume fields, but its mask paths
-refer to remote storage and were not used as executable local input.
+Provisional scientific review criteria, pending broader validation:
 
-As prior local evidence only:
+- Treat >=100 mm3 standalone generator cases with RAVD <=3% as technically
+  acceptable for further embedded-pipeline testing.
+- Treat <100 mm3 cases as requiring absolute-error-aware review, not pure RAVD.
+- Do not adopt the engineering smoke allowance for <100 mm3 as a scientific
+  acceptance rule without additional seed and spacing sweeps.
 
-- target range: 7.75 to 10363.5 mm3
-- median target: 270.375 mm3
-- median volume error fraction: 1.49%
-- mean volume error fraction: 1.90%
-- maximum volume error fraction: 14.50%
-- 237/261 rows were <=3% error
+## Deliverables
 
-This historical manifest is consistent with the new local benchmark: most cases
-are accurate, but very small volumes are the weak tail.
+Regenerated or updated successfully:
 
-## Limitations
+- `analysis/volume_targeting/volume_targeting_benchmark.csv`
+- `analysis/volume_targeting/VOLUME_TARGETING_REPORT.md`
+- `analysis/volume_targeting/requested_vs_achieved.png`
+- `analysis/volume_targeting/ravd_by_target_volume.png`
 
-This is not a full scientific validation of clinical tumor volume targeting.
-
-Important limitations:
-
-- This benchmark covers the standalone synthetic mask generator only.
-- It does not exercise `embed_tumor.py` placement, orientation selection,
-  interpolation, clipping inside a patient MRI frame, or embedded target-volume
-  reporting.
-- It uses two base seeds, not a large population sweep.
-- It uses two spacing regimes, not the full distribution of real MRI spacings.
-- It does not validate anatomical realism, only requested-versus-achieved mask
-  volume behavior.
-- The local scale-curve probe is diagnostic, not a replacement for recording
-  every internal binary-search candidate.
-
-## Recommended Validation Thresholds
-
-For local standalone synthetic lollipop mask generation:
-
-1. Targets >=100 mm3:
-   - pass if RAVD <=3%
-   - warn if 3% < RAVD <=5%
-   - fail/review if RAVD >5%
-
-2. Targets 50 to <100 mm3:
-   - pass if RAVD <=3%
-   - warn if RAVD <=7% and absolute error <=5 mm3
-   - fail/review otherwise
-
-3. Targets <50 mm3:
-   - pass if absolute error <=1 mm3 or RAVD <=3%
-   - warn if absolute error <=3 mm3
-   - fail/review otherwise
-
-4. Any target:
-   - fail/review if mask has zero voxels
-   - fail/review if component count is not 1
-   - fail/review if the mask touches the generation-grid boundary
-   - fail/review if local scale-curve non-monotonicity is observed near the
-     calibration range
-
-## Follow-Up Tasks
-
-- VOL-002: Add an embedded-pipeline volume-targeting benchmark using local
-  synthetic MRI/segmentation fixtures, once that file scope is assigned.
-- VOL-003: Add candidate-level calibration trace logging in the generator or
-  benchmark path, if a future task grants ownership of the generator script.
-- VOL-004: Expand the target grid below 100 mm3 with smaller voxel volumes to
-  separate true calibration limitations from voxel quantization.
-- VOL-005: Run a larger local seed sweep for 100 to 16000 mm3 before using the
-  thresholds as release criteria.
-
-## Human Review
-
-No immediate human scientific decision is required for this local engineering
-benchmark. Human review is recommended before adopting the proposed thresholds
-as scientific acceptance criteria.
+No source files were edited, no morphology tuning was performed, no SSH/Rivanna
+access was used, and no full cohort was run.

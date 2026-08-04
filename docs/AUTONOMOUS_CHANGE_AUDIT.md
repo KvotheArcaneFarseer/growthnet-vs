@@ -11,18 +11,18 @@ Audit boundary:
 
 | File | Verdict | Risk | Tests | Human Review |
 |---|---|---|---|---|
-| `embed_tumor.py` | HUMAN_REVIEW_REQUIRED | High scientific | `tests/test_embedding_helpers.py` targets uncommitted APIs; pytest unavailable | yes |
+| `embed_tumor.py` | HUMAN_REVIEW_REQUIRED | High scientific | selected `.venv` pytest suite passed; tests cover engineering helpers, not scientific validity | yes |
 | `projects/vivit/src/data/synthetic.py` | KEEP_WITH_FOLLOWUP | Medium scientific/API | no focused scale-parameter test run | yes before scientific use |
-| `scripts/run_batch_embedding.py` | KEEP | Low engineering after patch | py_compile and direct helper smoke passed; pytest unavailable | no |
-| `scripts/generate_synthetic_longitudinal_dataset.py` | KEEP_WITH_FOLLOWUP | Medium scientific semantics | unittest audit previously passed; pytest unavailable | yes |
-| `scripts/extract_real_tumor_features.py` | MODIFY | Medium scientific/metric schema | py_compile passed; pytest unavailable | yes before metric-definition change |
-| `scripts/generate_synthetic_lollipop_cohort.py` | KEEP_WITH_FOLLOWUP | Medium provenance/aniso | py_compile passed; pytest unavailable | yes before authoritative use |
-| `tests/test_batch_helpers.py` | KEEP | Low | py_compile and direct helper smoke passed; pytest unavailable | no |
-| `tests/test_embedding_helpers.py` | MODIFY | Medium integration | pytest unavailable | no, but implementation/test mismatch must be resolved |
-| `tests/test_feature_extractor_helpers.py` | KEEP_WITH_FOLLOWUP | Low | pytest unavailable | no |
-| `tests/test_longitudinal_dataset_audit.py` | KEEP_WITH_FOLLOWUP | Low | unittest previously passed; pytest unavailable | no |
-| `tests/test_longitudinal_helpers.py` | KEEP_WITH_FOLLOWUP | Low | pytest unavailable | no |
-| `tests/test_synthetic_generation.py` | KEEP_WITH_FOLLOWUP | Low | pytest unavailable | no |
+| `scripts/run_batch_embedding.py` | KEEP | Low engineering after patch | selected `.venv` pytest suite passed | no |
+| `scripts/generate_synthetic_longitudinal_dataset.py` | KEEP_WITH_FOLLOWUP | Medium scientific semantics | selected `.venv` pytest suite passed for helper/MVP tests | yes |
+| `scripts/extract_real_tumor_features.py` | MODIFY | Medium scientific/metric schema | selected `.venv` pytest suite passed for helper tests | yes before metric-definition change |
+| `scripts/generate_synthetic_lollipop_cohort.py` | KEEP_WITH_FOLLOWUP | Medium provenance/aniso | selected `.venv` pytest suite passed for helper/small calibration tests | yes before authoritative use |
+| `tests/test_batch_helpers.py` | KEEP | Low | selected `.venv` pytest suite passed | no |
+| `tests/test_embedding_helpers.py` | MODIFY | Medium integration | selected `.venv` pytest suite passed against current working tree | no, but committed implementation/test boundary still needs cleanup |
+| `tests/test_feature_extractor_helpers.py` | KEEP_WITH_FOLLOWUP | Low | selected `.venv` pytest suite passed | no |
+| `tests/test_longitudinal_dataset_audit.py` | KEEP_WITH_FOLLOWUP | Low | selected `.venv` pytest suite passed | no |
+| `tests/test_longitudinal_helpers.py` | KEEP_WITH_FOLLOWUP | Low | selected `.venv` pytest suite passed | no |
+| `tests/test_synthetic_generation.py` | KEEP_WITH_FOLLOWUP | Low | selected `.venv` pytest suite passed | no |
 
 ## Applied Low-Risk MODIFY Items
 
@@ -125,15 +125,23 @@ Recommendation: KEEP_WITH_FOLLOWUP for exploratory local generation; MODIFY befo
 ## Test Execution
 
 Environment:
-- `python3 --version`: Python 3.9.6.
-- `python3 -m pip show pytest`: pytest not installed.
+- System `python3 --version`: Python 3.9.6.
+- System `python3 -m pip show pytest`: pytest not installed.
+- Repo-local `.venv/bin/python --version`: Python 3.9.6.
+- Repo-local `.venv/bin/python -m pytest --version`: pytest 8.4.2.
 
 Commands:
 - `python3 -m pytest tests/test_batch_helpers.py -v`: blocked, no pytest.
 - `python3 -m pytest -m "fast and not slow" -v`: blocked, no pytest.
+- `.venv/bin/python -m pytest -m "fast and not slow" -v`: passed, 39 passed, 9 deselected, 14 warnings in 2.30s.
 - `PYTHONPYCACHEPREFIX=/tmp/growthnet_pycache python3 -m py_compile scripts/run_batch_embedding.py tests/test_batch_helpers.py`: passed.
 - `git diff --check`: passed.
 - Direct helper regression smoke for target-volume fallback and missing-axis-error filtering: passed.
+
+Warning classification:
+- The 14 pytest warnings are Matplotlib/PyParsing deprecation warnings from dependencies.
+- They are not GrowthNet test failures.
+- Passing this suite supports local engineering confidence only; it does not establish scientific validity.
 
 GitNexus:
 - Required GitNexus tools were not exposed in this session, so `gitnexus_detect_changes()` could not be run before commit.

@@ -1,29 +1,20 @@
 """Runtime logging for reproducible experiment runs."""
 import json
-import subprocess
 from datetime import datetime
 from pathlib import Path
+
+from shared.provenance import freeze_environment as _freeze_environment
+from shared.provenance import get_git_commit as _get_git_commit
 
 
 def get_git_commit():
     """Return current git commit hash, or 'unknown' if not in a repo."""
-    try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL
-        ).decode().strip()
-    except Exception:
-        return "unknown"
+    return _get_git_commit(unknown="unknown")
 
 
 def freeze_environment(output_path):
     """Write pip freeze output to a file."""
-    try:
-        freeze = subprocess.check_output(
-            ["pip", "freeze"], stderr=subprocess.DEVNULL
-        ).decode()
-    except Exception:
-        freeze = "pip freeze unavailable"
-    Path(output_path).write_text(freeze)
+    _freeze_environment(output_path)
 
 
 def init_run(base_dir, project, experiment, config):

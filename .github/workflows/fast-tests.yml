@@ -1,0 +1,42 @@
+name: fast-tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  fast-tests:
+    runs-on: ubuntu-latest
+    env:
+      MPLCONFIGDIR: /tmp/growthnet_mpl
+      PYTHONPYCACHEPREFIX: /tmp/growthnet_pycache
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install local package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Compile core scripts
+        run: |
+          python -m py_compile \
+            embed_tumor.py \
+            scripts/run_batch_embedding.py \
+            scripts/extract_real_tumor_features.py \
+            scripts/generate_synthetic_lollipop_cohort.py \
+            scripts/generate_synthetic_longitudinal_dataset.py \
+            projects/vivit/src/data/synthetic.py \
+            projects/vivit/src/data/synthetic_longitudinal_loader.py
+
+      - name: Run fast local tests
+        run: python -m pytest -m "fast and not slow" -v

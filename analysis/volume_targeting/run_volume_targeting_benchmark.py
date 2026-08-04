@@ -8,8 +8,6 @@ the current repository generator code without modifying it.
 from __future__ import annotations
 
 import argparse
-import csv
-import hashlib
 import math
 import os
 import sys
@@ -34,6 +32,7 @@ from scripts.generate_synthetic_lollipop_cohort import (  # noqa: E402
     _stable_seed,
     _volume_mm3,
 )
+from shared.reporting import write_csv_rows  # noqa: E402
 
 
 DEFAULT_TARGETS = [
@@ -218,12 +217,8 @@ def _run_case(
 
 
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = list(rows[0].keys()) if rows else []
-    with path.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
+    write_csv_rows(path, rows, fieldnames)
 
 
 def _write_plots(out_dir: Path, rows: list[dict[str, object]]) -> list[Path]:

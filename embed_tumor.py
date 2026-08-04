@@ -126,11 +126,18 @@ class ValidationThresholds:
     """Default thresholds for warnings vs hard failures."""
     centroid_offset_warn_mm: float = 1.5
     centroid_offset_fail_mm: float = 3.0
+    axis_error_deg_warn: float = 30.0
+    axis_error_deg_fail: float = 60.0
     retained_fraction_warn: float = 0.95
     retained_fraction_fail: float = 0.80
+    # retained_fraction > this indicates a resampling artifact, not true growth
+    retained_fraction_high_warn: float = 1.05
     worst_clipping_warn: float = 0.90
     worst_clipping_fail: float = 0.75
+    # orientation_confidence_warn: normalized gap threshold (gap / (|best|+|worst|))
     orientation_confidence_warn: float = 0.08
+    # orientation_score_margin_warn: raw Dice score difference threshold
+    orientation_score_margin_warn: float = 0.05
     placed_to_seg_ratio_warn_low: float = 0.20
     placed_to_seg_ratio_warn_high: float = 1.80
     placed_to_seg_ratio_fail_low: float = 0.10
@@ -161,6 +168,22 @@ class EmbeddingCaseMetrics:
     retained_fraction: float
     centroid_offset_vox: float
     centroid_offset_mm: float
+    primary_axis_error_deg: float | None
+    cpa_radius_anatomy_mm: float
+    cpa_radius_effective_mm: float
+    cpa_radius_override_active: bool
+    volume_optimization_variable: str | None
+    target_volume_mm3: float | None
+    volume_target_timepoint: str | None
+    volume_target_timepoint_index: int | None
+    volume_target_timepoint_day: int | None
+    target_timepoint_actual_volume_mm3: float | None
+    target_timepoint_voxels: int | None
+    actual_volume_mm3: float | None
+    ravd: float | None
+    volume_converged: bool | None
+    volume_iterations: int | None
+    volume_scale_final: float | None
     target_seg_voxel_count: int
     placed_to_seg_ratio: float
     monotone_growth: bool
@@ -447,6 +470,23 @@ def validate_embedding_case(
     primary_placed_voxels: int,
     primary_centroid_offset_vox: float,
     primary_centroid_offset_mm: float,
+    cpa_radius_anatomy_mm: float,
+    cpa_radius_effective_mm: float,
+    cpa_radius_override_active: bool,
+    volume_optimization_variable: str | None = None,
+    target_volume_mm3: float | None = None,
+    volume_target_timepoint: str | None = None,
+    volume_target_timepoint_index: int | None = None,
+    volume_target_timepoint_day: int | None = None,
+    target_timepoint_actual_volume_mm3: float | None = None,
+    target_timepoint_voxels: int | None = None,
+    actual_volume_mm3: float | None = None,
+    ravd: float | None = None,
+    volume_converged: bool | None = None,
+    volume_iterations: int | None = None,
+    volume_scale_final: float | None = None,
+    volume_target_below_min: bool = False,
+    volume_target_above_max_or_clipped: bool = False,
     thresholds: ValidationThresholds | None = None,
 ) -> EmbeddingCaseMetrics:
     """Build per-case metrics and classify validation findings."""
@@ -456,6 +496,7 @@ def validate_embedding_case(
     primary_tp = next((tp for tp in timepoint_metrics if tp.timepoint_index == primary_timepoint_index), None)
     source_volume_mm3 = float(primary_tp.source_volume_mm3) if primary_tp is not None else float(primary_source_voxels)
     placed_volume_mm3 = float(primary_tp.placed_volume_mm3) if primary_tp is not None else float(primary_placed_voxels)
+    primary_axis_error_deg = None if primary_tp is None else primary_tp.axis_error_deg
     retained_fraction = float(placed_volume_mm3 / max(source_volume_mm3, 1e-8))
     max_placed_voxel_count = max((tp.placed_voxels for tp in timepoint_metrics), default=primary_placed_voxels)
     max_placed_volume_mm3 = max((tp.placed_volume_mm3 for tp in timepoint_metrics), default=float(primary_placed_voxels))
@@ -476,6 +517,10 @@ def validate_embedding_case(
         add_finding("hard_failure", "centroid_offset_fail", f"Centroid offset {primary_centroid_offset_mm:.2f} mm exceeds failure threshold.")
     elif primary_centroid_offset_mm >= thresholds.centroid_offset_warn_mm:
         add_finding("warning", "centroid_offset_warn", f"Centroid offset {primary_centroid_offset_mm:.2f} mm exceeds warning threshold.")
+    if primary_axis_error_deg is not None and primary_axis_error_deg >= thresholds.axis_error_deg_fail:
+        add_finding("hard_failure", "axis_error_fail", f"Primary axis error {primary_axis_error_deg:.2f} deg exceeds failure threshold.")
+    elif primary_axis_error_deg is not None and primary_axis_error_deg >= thresholds.axis_error_deg_warn:
+        add_finding("warning", "axis_error_warn", f"Primary axis error {primary_axis_error_deg:.2f} deg exceeds warning threshold.")
 
     if retained_fraction <= thresholds.retained_fraction_fail:
         add_finding("hard_failure", "retained_fraction_fail", f"Retained fraction {retained_fraction:.3f} is too low.")
@@ -488,19 +533,34 @@ def validate_embedding_case(
         add_finding("warning", "worst_clipping_warn", f"Worst retained fraction {worst_clipping_fraction:.3f} indicates clipping.")
 
     if not monotone_growth:
-        add_finding("warning", "non_monotone_growth", "Placed mask voxel counts are not monotone non-decreasing across timepoints.")
-
-    if selected_orientation.confidence <= thresholds.orientation_confidence_warn:
         add_finding(
             "warning",
-            "orientation_low_confidence",
-            f"Orientation confidence {selected_orientation.confidence:.4f} is below the warning threshold {thresholds.orientation_confidence_warn:.4f} (margin {selected_orientation.debug.get('score_margin', 0.0):.4f}).",
+            "non_monotone_growth",
+            "Placed mask voxel counts are not monotone non-decreasing across timepoints.",
         )
-    elif selected_orientation.low_confidence:
+
+    if retained_fraction > thresholds.retained_fraction_high_warn:
+        add_finding(
+            "warning",
+            "retained_fraction_high",
+            f"Retained fraction {retained_fraction:.4f} exceeds 1.0 — likely a resampling artifact.",
+        )
+
+    _score_margin = float(selected_orientation.debug.get("score_margin", 0.0))
+    _normalized_gap = float(selected_orientation.confidence)
+    if _score_margin < thresholds.orientation_score_margin_warn:
         add_finding(
             "warning",
             "orientation_low_score_margin",
-            f"Orientation score margin {selected_orientation.debug.get('score_margin', 0.0):.4f} is low despite confidence {selected_orientation.confidence:.4f} exceeding the warning threshold {thresholds.orientation_confidence_warn:.4f}.",
+            f"Orientation score margin {_score_margin:.4f} is below threshold "
+            f"{thresholds.orientation_score_margin_warn} — candidates have similar Dice scores.",
+        )
+    if _normalized_gap <= thresholds.orientation_confidence_warn:
+        add_finding(
+            "warning",
+            "orientation_low_normalized_gap",
+            f"Orientation normalized gap {_normalized_gap:.4f} is below threshold "
+            f"{thresholds.orientation_confidence_warn}.",
         )
 
     if not strategy_agreement:
@@ -510,6 +570,18 @@ def validate_embedding_case(
         add_finding("hard_failure", "placed_to_seg_ratio_fail", f"Placed/seg volume ratio {placed_to_seg_ratio:.3f} is implausible.")
     elif placed_to_seg_ratio <= thresholds.placed_to_seg_ratio_warn_low or placed_to_seg_ratio >= thresholds.placed_to_seg_ratio_warn_high:
         add_finding("warning", "placed_to_seg_ratio_warn", f"Placed/seg volume ratio {placed_to_seg_ratio:.3f} is outside the warning band.")
+    if volume_target_below_min:
+        add_finding(
+            "warning",
+            "volume_target_below_min",
+            "Requested target volume is below the minimum producible volume within current scale bounds; returned best available mask.",
+        )
+    if volume_target_above_max_or_clipped:
+        add_finding(
+            "warning",
+            "volume_target_above_max_or_clipped",
+            "Requested target volume could not be reached under current generation/placement bounds; returned best available mask.",
+        )
 
     warnings = [finding.message for finding in findings if finding.severity == "warning"]
     hard_failures = [finding.message for finding in findings if finding.severity == "hard_failure"]
@@ -535,6 +607,22 @@ def validate_embedding_case(
         retained_fraction=retained_fraction,
         centroid_offset_vox=float(primary_centroid_offset_vox),
         centroid_offset_mm=float(primary_centroid_offset_mm),
+        primary_axis_error_deg=None if primary_axis_error_deg is None else float(primary_axis_error_deg),
+        cpa_radius_anatomy_mm=float(cpa_radius_anatomy_mm),
+        cpa_radius_effective_mm=float(cpa_radius_effective_mm),
+        cpa_radius_override_active=bool(cpa_radius_override_active),
+        volume_optimization_variable=None if volume_optimization_variable is None else str(volume_optimization_variable),
+        target_volume_mm3=None if target_volume_mm3 is None else float(target_volume_mm3),
+        volume_target_timepoint=None if volume_target_timepoint is None else str(volume_target_timepoint),
+        volume_target_timepoint_index=None if volume_target_timepoint_index is None else int(volume_target_timepoint_index),
+        volume_target_timepoint_day=None if volume_target_timepoint_day is None else int(volume_target_timepoint_day),
+        target_timepoint_actual_volume_mm3=None if target_timepoint_actual_volume_mm3 is None else float(target_timepoint_actual_volume_mm3),
+        target_timepoint_voxels=None if target_timepoint_voxels is None else int(target_timepoint_voxels),
+        actual_volume_mm3=None if actual_volume_mm3 is None else float(actual_volume_mm3),
+        ravd=None if ravd is None else float(ravd),
+        volume_converged=None if volume_converged is None else bool(volume_converged),
+        volume_iterations=None if volume_iterations is None else int(volume_iterations),
+        volume_scale_final=None if volume_scale_final is None else float(volume_scale_final),
         target_seg_voxel_count=int(seg_voxel_count),
         placed_to_seg_ratio=placed_to_seg_ratio,
         monotone_growth=bool(monotone_growth),
@@ -577,6 +665,22 @@ def write_case_reports(metrics: EmbeddingCaseMetrics, out_dir: Path) -> tuple[Pa
         "retained_fraction": metrics.retained_fraction,
         "centroid_offset_vox": metrics.centroid_offset_vox,
         "centroid_offset_mm": metrics.centroid_offset_mm,
+        "primary_axis_error_deg": metrics.primary_axis_error_deg,
+        "cpa_radius_anatomy_mm": metrics.cpa_radius_anatomy_mm,
+        "cpa_radius_effective_mm": metrics.cpa_radius_effective_mm,
+        "cpa_radius_override_active": metrics.cpa_radius_override_active,
+        "volume_optimization_variable": metrics.volume_optimization_variable,
+        "target_volume_mm3": metrics.target_volume_mm3,
+        "volume_target_timepoint": metrics.volume_target_timepoint,
+        "volume_target_timepoint_index": metrics.volume_target_timepoint_index,
+        "volume_target_timepoint_day": metrics.volume_target_timepoint_day,
+        "target_timepoint_actual_volume_mm3": metrics.target_timepoint_actual_volume_mm3,
+        "target_timepoint_voxels": metrics.target_timepoint_voxels,
+        "actual_volume_mm3": metrics.actual_volume_mm3,
+        "ravd": metrics.ravd,
+        "volume_converged": metrics.volume_converged,
+        "volume_iterations": metrics.volume_iterations,
+        "volume_scale_final": metrics.volume_scale_final,
         "target_seg_voxel_count": metrics.target_seg_voxel_count,
         "placed_to_seg_ratio": metrics.placed_to_seg_ratio,
         "monotone_growth": metrics.monotone_growth,
@@ -745,8 +849,9 @@ def _save_qc_png(
     title_suffix: str = "",
     audit_suffix: str = "",
 ) -> None:
-    """Save a 3×3 QC PNG: (axial/coronal/sagittal) × (orig / seg overlay / embedded overlay)."""
+    """Save a 3×4 QC PNG with a tumor-centered ROI zoom column."""
     H, W, D = mri_data.shape
+    zoom_box = 80
 
     # Choose the slice plane centred on the embedded mask
     if emb_mask.sum() > 0:
@@ -764,6 +869,36 @@ def _save_qc_png(
     def norm_slice(s: np.ndarray) -> np.ndarray:
         return np.clip((s.astype(np.float32) - mri_p1) / (mri_p99 - mri_p1 + 1e-8), 0, 1)
 
+    def crop_bounds(length: int, center: int, box: int) -> tuple[int, int]:
+        box = int(min(box, length))
+        start = max(0, center - box // 2)
+        end = start + box
+        if end > length:
+            end = length
+            start = end - box
+        return start, end
+
+    def roi_norm_slice(s: np.ndarray, mask_slice: np.ndarray) -> np.ndarray:
+        mask_idx = np.argwhere(mask_slice > 0)
+        if mask_idx.size == 0:
+            return norm_slice(s)
+        pad = 8
+        row0 = max(0, int(mask_idx[:, 0].min()) - pad)
+        row1 = min(s.shape[0], int(mask_idx[:, 0].max()) + pad + 1)
+        col0 = max(0, int(mask_idx[:, 1].min()) - pad)
+        col1 = min(s.shape[1], int(mask_idx[:, 1].max()) + pad + 1)
+        roi = s[row0:row1, col0:col1].astype(np.float32)
+        if roi.size == 0:
+            return norm_slice(s)
+        roi_p1 = float(np.percentile(roi, 1))
+        roi_p99 = float(np.percentile(roi, 99))
+        return np.clip((s.astype(np.float32) - roi_p1) / (roi_p99 - roi_p1 + 1e-8), 0, 1)
+
+    def crop_centered(arr: np.ndarray, center_rc: tuple[int, int]) -> np.ndarray:
+        row0, row1 = crop_bounds(arr.shape[0], int(center_rc[0]), zoom_box)
+        col0, col1 = crop_bounds(arr.shape[1], int(center_rc[1]), zoom_box)
+        return arr[row0:row1, col0:col1]
+
     planes = [
         ("Axial",
          mri_data[:, :, ax_slice].T,   seg_data[:, :, ax_slice].T,
@@ -776,8 +911,8 @@ def _save_qc_png(
          emb_vol[sag_slice, :, :].T,   emb_mask[sag_slice, :, :].T),
     ]
 
-    col_titles = ["Original MRI", "Real Segmentation", "Embedded + Mask"]
-    fig, axes = plt.subplots(3, 3, figsize=(14, 13))
+    col_titles = ["Original MRI", "Real Segmentation", "Embedded + Mask", "ROI Zoom (2.5x)"]
+    fig, axes = plt.subplots(3, 4, figsize=(18, 13))
     heading = f"Embedded lollipop QC  —  {title_suffix}\n" if title_suffix else "Embedded lollipop QC\n"
     fig.suptitle(
         heading +
@@ -790,6 +925,13 @@ def _save_qc_png(
     for row, (plane_name, orig, seg_sl, emb, emb_mask_sl) in enumerate(planes):
         orig_n = norm_slice(orig)
         emb_n  = norm_slice(emb)
+        zoom_base_n = roi_norm_slice(emb, emb_mask_sl)
+        overlay_zoom = overlay_rgba(zoom_base_n, emb_mask_sl, (0.0, 0.85, 1.0), alpha=0.6)
+        if np.any(emb_mask_sl):
+            zoom_center = tuple(np.round(np.argwhere(emb_mask_sl > 0).mean(axis=0)).astype(int))
+        else:
+            zoom_center = (emb_mask_sl.shape[0] // 2, emb_mask_sl.shape[1] // 2)
+        overlay_zoom = crop_centered(overlay_zoom, zoom_center)
 
         axes[row, 0].imshow(orig_n, cmap="gray", vmin=0, vmax=1,
                             origin="lower", aspect="auto")
@@ -801,7 +943,9 @@ def _save_qc_png(
         axes[row, 2].imshow(overlay_rgba(emb_n, emb_mask_sl, (0.0, 0.85, 1.0), alpha=0.6),
                             origin="lower", aspect="auto")
 
-        for col in range(3):
+        axes[row, 3].imshow(overlay_zoom, origin="lower", aspect="auto")
+
+        for col in range(4):
             axes[row, col].axis("off")
             if row == 0:
                 axes[row, col].set_title(col_titles[col], fontsize=9)
@@ -918,13 +1062,49 @@ def main(
     rad_min: int = 4,
     rad_max: int = 30,
     growth: str = "steady",
+    canal_growth_scale: float = 1.0,
+    bulb_growth_scale: float = 1.0,
+    t0_volume_fraction_of_seg: float | None = None,
     validate_anisotropy: bool = False,
     seed: int | None = None,
+    target_tumor_volume_mm3: float | None = None,
+    volume_target_timepoint: str = "first",
+    volume_ravd_tolerance: float = 0.05,
+    volume_max_iterations: int = 10,
 ) -> None:
 
     out_dir.mkdir(parents=True, exist_ok=True)
     if dates is None:
         dates = [0, 60, 120, 180, 240]
+    if t0_volume_fraction_of_seg is not None and t0_volume_fraction_of_seg <= 0.0:
+        raise ValueError("t0_volume_fraction_of_seg must be > 0 when provided.")
+    if target_tumor_volume_mm3 is not None and target_tumor_volume_mm3 <= 0.0:
+        raise ValueError("target_tumor_volume_mm3 must be > 0 when provided.")
+    if volume_ravd_tolerance <= 0.0:
+        raise ValueError("volume_ravd_tolerance must be > 0.")
+    if volume_max_iterations < 1:
+        raise ValueError("volume_max_iterations must be >= 1.")
+    if target_tumor_volume_mm3 is not None and t0_volume_fraction_of_seg is not None:
+        raise ValueError("Provide either target_tumor_volume_mm3 or t0_volume_fraction_of_seg, not both.")
+
+    volume_target_timepoint_raw = str(volume_target_timepoint).strip().lower()
+    if volume_target_timepoint_raw == "first":
+        volume_target_timepoint_index = 0
+    elif volume_target_timepoint_raw == "last":
+        volume_target_timepoint_index = len(dates) - 1
+    else:
+        try:
+            volume_target_timepoint_index = int(volume_target_timepoint_raw)
+        except ValueError as exc:
+            raise ValueError(
+                "volume_target_timepoint must be 'first', 'last', or an integer index string."
+            ) from exc
+        if volume_target_timepoint_index < 0 or volume_target_timepoint_index >= len(dates):
+            raise ValueError(
+                f"volume_target_timepoint index {volume_target_timepoint_index} is out of bounds for "
+                f"{len(dates)} timepoints."
+            )
+    volume_target_timepoint_day = int(dates[volume_target_timepoint_index])
 
     # ── 1. Load data ──────────────────────────────────────────────────────────
     print("Loading MRI and segmentation…")
@@ -938,6 +1118,9 @@ def main(
         raise ValueError("MRI and segmentation affines differ; inputs must be coregistered on the same grid.")
     H, W, D = mri_data.shape
     voxel_spacing = np.array(mri_nib.header.get_zooms()[:3], dtype=np.float64)
+    if voxel_spacing.shape[0] != 3 or not np.all(np.isfinite(voxel_spacing)) or np.any(voxel_spacing <= 0.0):
+        raise ValueError(f"Invalid voxel spacing from MRI header: {voxel_spacing!r}")
+    voxel_volume_mm3 = float(np.prod(voxel_spacing))
     case_id = f"{mri_path.resolve()}__{seg_path.resolve()}"
     seed = int(seed) if seed is not None else stable_seed_from_case(case_id)
     rng = np.random.default_rng(seed)
@@ -987,14 +1170,51 @@ def main(
         cpa_radius_mm = (3.0 * V_cpa_mm3 / (4.0 * np.pi)) ** (1.0 / 3.0)
     else:
         cpa_radius_mm = iac_base_r_mm  # fallback: match porus opening
-    cpa_radius_syn = cpa_radius_mm
+    cpa_radius_anatomy_mm = float(cpa_radius_mm)
+    cpa_radius_effective_mm = float(cpa_radius_anatomy_mm)
+    cpa_radius_override_active = False
+    if target_tumor_volume_mm3 is not None:
+        target_cpa_mm3 = max(0.0, float(target_tumor_volume_mm3) - V_iac_mm3)
+        if target_cpa_mm3 > 0.0:
+            # Existing spherical approximation.
+            required_cpa_radius_sphere_mm = (3.0 * target_cpa_mm3 / (4.0 * np.pi)) ** (1.0 / 3.0)
+            # Oblate-aware approximation from generator geometry:
+            # cpa_ax_r = min(br*0.7, cr*0.45), cpa_eq_r = cr.
+            # V ≈ 4/3*pi*cpa_ax_r*cr^2.
+            br_mm = iac_base_r_mm
+            cpa_ax_cap_mm = br_mm * 0.7
+            cr_transition_mm = cpa_ax_cap_mm / 0.45
+            v_transition_mm3 = (4.0 / 3.0) * np.pi * cpa_ax_cap_mm * (cr_transition_mm ** 2)
+            if target_cpa_mm3 <= v_transition_mm3:
+                required_cpa_radius_oblate_mm = (target_cpa_mm3 / ((4.0 / 3.0) * np.pi * 0.45)) ** (1.0 / 3.0)
+            else:
+                required_cpa_radius_oblate_mm = (target_cpa_mm3 / ((4.0 / 3.0) * np.pi * cpa_ax_cap_mm)) ** 0.5
+            required_cpa_radius_mm = max(required_cpa_radius_sphere_mm, required_cpa_radius_oblate_mm)
+            if required_cpa_radius_mm > cpa_radius_anatomy_mm:
+                cpa_radius_override_active = True
+                cpa_radius_effective_mm = float(required_cpa_radius_mm)
+                print(
+                    f"  [warn] Target volume {float(target_tumor_volume_mm3):.1f} mm^3 requires larger CPA radius: "
+                    f"anatomy={cpa_radius_anatomy_mm:.2f} mm -> effective={cpa_radius_effective_mm:.2f} mm"
+                )
+    if (
+        target_tumor_volume_mm3 is not None
+        and volume_target_timepoint_index == 0
+        and (cpa_radius_override_active or (float(target_tumor_volume_mm3) / max(seg_vol_mm3, 1e-8)) > 0.5)
+    ):
+        print(
+            "  [warn] first-timepoint volume targeting is in stress-test mode for this target; "
+            "it may invalidate longitudinal growth semantics and principal-axis validation."
+        )
+    cpa_radius_syn = cpa_radius_effective_mm
 
     print("\nLollipop geometry  (synthetic isotropic space = 1 mm / syn voxel):")
     print(f"  IAC canal length : {iac_canal_mm:.1f} mm  = {iac_canal_syn:.1f} syn vox  [literature]")
     print(f"  Porus radius     : {iac_base_r_mm:.1f} mm  = {iac_base_r_syn:.1f} syn vox  [literature]")
     print(f"  Fundus radius    : {iac_apex_r_mm:.1f} mm  = {iac_apex_r_syn:.1f} syn vox  [literature]")
     print(f"  Seg volume       : {seg_vol_mm3:.0f} mm³  (IAC cone ≈ {V_iac_mm3:.0f} mm³)")
-    print(f"  CPA bulb radius  : {cpa_radius_mm:.1f} mm  = {cpa_radius_syn:.1f} syn vox  [from seg vol]")
+    print(f"  CPA bulb radius (anatomy) : {cpa_radius_anatomy_mm:.1f} mm")
+    print(f"  CPA bulb radius (effective): {cpa_radius_effective_mm:.1f} mm  = {cpa_radius_syn:.1f} syn vox")
 
     # Ensure gen_size is large enough to hold the full lollipop at final dimensions.
     # With centered=True the porus sits at cube centre; max half-extents are:
@@ -1011,70 +1231,386 @@ def main(
     # canal_axis="c" → canal along depth dim (spz_rotate) → local axis [0,0,1]
     # centered=True  → porus placed at cube centre, avoiding boundary clipping
     print(f"\nGenerating lollipop tumor series  (size={gen_size}, dates={dates})…")
-    syn_images, syn_labels = create_synthetic_time_3d(
-        height=gen_size,
-        width=gen_size,
-        depth=gen_size,
-        dates=dates,
-        rotation_degrees=[0, 0, 0],  # no pre-rotation; we apply our own below
-        rad_max=rad_max,
-        rad_min=rad_min,
-        channel_dim=0,               # → (1, H, W, D)
-        growth=growth,
-        growth_direction="a",        # only affects a/b/c radii, irrelevant for lollipop
-        geometry_mode="lollipop",
-        canal_axis="c",              # canal grows along depth dim → default axis [0,0,1]
-        # mm-derived IAC geometry in isotropic synthetic space (1 syn voxel = 1 mm)
-        canal_base_radius_max=iac_base_r_syn,
-        canal_apex_radius_max=iac_apex_r_syn,
-        canal_length_max_override=iac_canal_syn,
-        bulb_radius_max=cpa_radius_syn,
-        centered=True,               # fix porus at cube centre — prevents boundary clipping
-        random_state=rng,
-    )
-    print(f"  Generated {len(syn_images)} timepoints.")
 
-    # ── 4. Find smallest + last timepoints ────────────────────────────────────
-    voxel_counts = [int(np.sum(lab[0] > 0)) for lab in syn_labels]
-    for i, cnt in enumerate(voxel_counts):
-        print(f"    t{i}  day={dates[i]:4d}  mask_voxels={cnt}")
+    def _generate_synthetic_series(
+        init_scale: float | None = None,
+        bulb_radius_max_mm: float | None = None,
+    ) -> tuple[list[np.ndarray], list[np.ndarray]]:
+        kwargs: dict[str, float | int | list[int] | str | bool | np.random.Generator] = {
+            "height": gen_size,
+            "width": gen_size,
+            "depth": gen_size,
+            "dates": dates,
+            "rotation_degrees": [0, 0, 0],  # no pre-rotation; we apply our own below
+            "rad_max": rad_max,
+            "rad_min": rad_min,
+            "channel_dim": 0,               # → (1, H, W, D)
+            "growth": growth,
+            "growth_direction": "a",        # only affects a/b/c radii, irrelevant for lollipop
+            "geometry_mode": "lollipop",
+            "canal_axis": "c",              # canal grows along depth dim → default axis [0,0,1]
+            "canal_base_radius_max": iac_base_r_syn,
+            "canal_apex_radius_max": iac_apex_r_syn,
+            "canal_length_max_override": iac_canal_syn,
+            "bulb_radius_max": cpa_radius_syn if bulb_radius_max_mm is None else float(bulb_radius_max_mm),
+            "canal_growth_scale": canal_growth_scale,
+            "bulb_growth_scale": bulb_growth_scale,
+            "centered": True,               # fix porus at cube centre — prevents boundary clipping
+            "random_state": np.random.default_rng(seed),
+        }
+        if init_scale is not None:
+            kwargs.update(
+                {
+                    "canal_length_init": min(iac_canal_syn, max(1.0, 2.0 * init_scale)),
+                    "canal_base_radius_init": min(iac_base_r_syn, max(0.75, iac_base_r_syn * 0.25 * init_scale)),
+                    "canal_apex_radius_init": min(iac_apex_r_syn, max(0.5, iac_apex_r_syn * 0.25 * init_scale)),
+                    "bulb_radius_init": min(cpa_radius_syn, max(1.0, 2.0 * init_scale)),
+                }
+            )
+        return create_synthetic_time_3d(**kwargs)
 
-    smallest_idx = int(np.argmin(voxel_counts))
-    last_idx     = len(dates) - 1
-    mid_idx      = max(0, min(last_idx, len(dates) // 2))
-    print(f"\n  Smallest timepoint : t{smallest_idx}  (day {dates[smallest_idx]},  {voxel_counts[smallest_idx]} voxels)")
-    print(f"  Last timepoint     : t{last_idx}  (day {dates[last_idx]},  {voxel_counts[last_idx]} voxels) ← lollipop QC")
-
-    # Centroid of the smallest tumor in synthetic space
-    smallest_mask_3d = syn_labels[smallest_idx][0]  # strip channel dim
-    _, syn_prop = largest_component(smallest_mask_3d)
-    syn_centroid = np.array(syn_prop.centroid, dtype=np.float64)
-    print(f"  Synthetic centroid (syn space) : {np.round(syn_centroid, 2)}")
-
-    # ── 5. Rotation: lollipop canal axis [0,0,1] → seg long axis ─────────────
-    # canal_axis="c" with no pre-rotation → canal direction in synthetic mm space = [0,0,1]
     default_axis = np.array([0.0, 0.0, 1.0])
-    orientation_inputs = OrientationInputs(
-        seg_mask=seg_component,
-        unresolved_axis_vox=seg_long_axis_vox,
-        default_axis_syn=default_axis,
-        syn_centroid=syn_centroid,
-        seg_centroid=seg_centroid,
-        out_shape=(H, W, D),
-        target_spacing=voxel_spacing,
-        syn_masks_by_name={
-            "late": syn_labels[last_idx][0],
-            "mid": syn_labels[mid_idx][0],
-        },
-    )
     strategies: list[OrientationStrategy] = [
         LateDiceOrientationStrategy(),
         MidGrowthDiceOrientationStrategy(),
     ]
-    comparison_results = compare_orientation_strategies(orientation_inputs, strategies)
-    default_orientation = next(result for result in comparison_results if result.method == LateDiceOrientationStrategy.name)
-    seg_long_axis_vox = default_orientation.axis_vox
-    seg_long_axis_phys = _axis_vox_to_phys(seg_long_axis_vox, voxel_spacing)
+
+    volume_debug_enabled = target_tumor_volume_mm3 is not None
+
+    def _prepare_series(
+        init_scale: float | None,
+        candidate_tag: str = "candidate",
+        bulb_radius_max_mm: float | None = None,
+    ) -> dict[str, object]:
+        syn_images_local, syn_labels_local = _generate_synthetic_series(
+            init_scale=init_scale,
+            bulb_radius_max_mm=bulb_radius_max_mm,
+        )
+        voxel_counts_local = [int(np.sum(lab[0] > 0)) for lab in syn_labels_local]
+        smallest_idx_local = int(np.argmin(voxel_counts_local))
+        last_idx_local = len(dates) - 1
+        mid_idx_local = max(0, min(last_idx_local, len(dates) // 2))
+        smallest_mask_local = syn_labels_local[smallest_idx_local][0]
+        target_mask_local = syn_labels_local[volume_target_timepoint_index][0]
+        _, syn_prop_local = largest_component(smallest_mask_local)
+        syn_centroid_local = np.array(syn_prop_local.centroid, dtype=np.float64)
+        orientation_inputs_local = OrientationInputs(
+            seg_mask=seg_component,
+            unresolved_axis_vox=seg_axes.long_axis_vox,
+            default_axis_syn=default_axis,
+            syn_centroid=syn_centroid_local,
+            seg_centroid=seg_centroid,
+            out_shape=(H, W, D),
+            target_spacing=voxel_spacing,
+            syn_masks_by_name={
+                "late": syn_labels_local[last_idx_local][0],
+                "mid": syn_labels_local[mid_idx_local][0],
+            },
+        )
+        comparison_results_local = compare_orientation_strategies(orientation_inputs_local, strategies)
+        default_orientation_local = next(
+            result for result in comparison_results_local if result.method == LateDiceOrientationStrategy.name
+        )
+        selected_axis_vox_local = default_orientation_local.axis_vox
+        selected_axis_phys_local = _axis_vox_to_phys(selected_axis_vox_local, voxel_spacing)
+        try:
+            rot_local, _ = Rotation.align_vectors(
+                selected_axis_phys_local[np.newaxis],  # target (MRI physical space)
+                default_axis[np.newaxis],              # source (synthetic isotropic space)
+            )
+            rot_matrix_local = rot_local.as_matrix()
+        except Exception:
+            rot_matrix_local = np.eye(3)
+        placed_target_local = rotate_and_translate(
+            target_mask_local.astype(np.float32),
+            rot_matrix_local,
+            syn_centroid_local,
+            seg_centroid,
+            out_shape=(H, W, D),
+            dst_spacing=voxel_spacing,
+            order=0,
+        )
+        placed_target_local = (placed_target_local > 0.5).astype(np.uint8)
+        source_target_vox_local = int(np.sum(target_mask_local > 0))
+        placed_target_vox_local = int(np.sum(placed_target_local > 0))
+        retained_target_fraction_local = float(placed_target_vox_local / max(source_target_vox_local, 1))
+        clipped_target_local = bool(source_target_vox_local > 0 and placed_target_vox_local < source_target_vox_local)
+        actual_volume_mm3_local = float(placed_target_vox_local) * voxel_volume_mm3
+        if volume_debug_enabled:
+            scale_str = "default" if init_scale is None else f"{float(init_scale):.6f}"
+            print(
+                f"  [volume-candidate:{candidate_tag}] "
+                f"scale={scale_str} "
+                f"target=t{volume_target_timepoint_index} day={volume_target_timepoint_day} "
+                f"source_vox={source_target_vox_local} "
+                f"placed_vox={placed_target_vox_local} "
+                f"actual_mm3={actual_volume_mm3_local:.1f} "
+                f"retained={retained_target_fraction_local:.4f} "
+                f"clipped={clipped_target_local} "
+                f"bulb_radius_max_mm={cpa_radius_syn if bulb_radius_max_mm is None else float(bulb_radius_max_mm):.4f} "
+                f"(smallest=t{smallest_idx_local} day={int(dates[smallest_idx_local])})"
+            )
+        return {
+            "init_scale": init_scale,
+            "syn_images": syn_images_local,
+            "syn_labels": syn_labels_local,
+            "voxel_counts": voxel_counts_local,
+            "smallest_idx": smallest_idx_local,
+            "last_idx": last_idx_local,
+            "mid_idx": mid_idx_local,
+            "syn_centroid": syn_centroid_local,
+            "comparison_results": comparison_results_local,
+            "default_orientation": default_orientation_local,
+            "selected_axis_vox": selected_axis_vox_local,
+            "selected_axis_phys": selected_axis_phys_local,
+            "rot_matrix": rot_matrix_local,
+            "actual_volume_mm3": actual_volume_mm3_local,
+            "source_target_voxels": source_target_vox_local,
+            "placed_target_voxels": placed_target_vox_local,
+            "retained_target_fraction": retained_target_fraction_local,
+            "clipped_target": clipped_target_local,
+            "target_timepoint_index": volume_target_timepoint_index,
+            "target_timepoint_day": volume_target_timepoint_day,
+            "bulb_radius_max_mm": cpa_radius_syn if bulb_radius_max_mm is None else float(bulb_radius_max_mm),
+        }
+
+    volume_target_mm3: float | None = None
+    volume_actual_mm3: float | None = None
+    target_timepoint_actual_volume_mm3: float | None = None
+    target_timepoint_voxels: int | None = None
+    volume_ravd: float | None = None
+    volume_converged: bool | None = None
+    volume_iterations: int | None = None
+    volume_scale_final: float | None = None
+    volume_optimization_variable: str | None = None
+    volume_target_below_min = False
+    volume_target_above_max_or_clipped = False
+    calibration_scale: float | None = None
+
+    if target_tumor_volume_mm3 is not None:
+        volume_target_mm3 = float(target_tumor_volume_mm3)
+        optimize_last = volume_target_timepoint_index == (len(dates) - 1)
+        if optimize_last:
+            volume_optimization_variable = "cpa_radius_effective_mm"
+            fixed_init_scale: float | None = None
+            low_val = max(0.5, cpa_radius_anatomy_mm * 0.35)
+            high_val = max(cpa_radius_effective_mm, cpa_radius_anatomy_mm)
+            prep_low = _prepare_series(fixed_init_scale, candidate_tag="low", bulb_radius_max_mm=low_val)
+            prep_high = _prepare_series(fixed_init_scale, candidate_tag="high", bulb_radius_max_mm=high_val)
+            low_vol = float(prep_low["actual_volume_mm3"])
+            high_vol = float(prep_high["actual_volume_mm3"])
+            for _ in range(8):
+                if low_vol <= volume_target_mm3:
+                    break
+                next_low = low_val / 1.5
+                if next_low <= 1e-4:
+                    break
+                high_val, prep_high, high_vol = low_val, prep_low, low_vol
+                low_val = next_low
+                prep_low = _prepare_series(fixed_init_scale, candidate_tag="low-expand", bulb_radius_max_mm=low_val)
+                low_vol = float(prep_low["actual_volume_mm3"])
+            if low_vol > volume_target_mm3:
+                volume_target_below_min = True
+            high_expand_attempts = 8
+            high_plateau_detected = False
+            for _ in range(high_expand_attempts):
+                if high_vol >= volume_target_mm3:
+                    break
+                low_val, prep_low, low_vol = high_val, prep_high, high_vol
+                high_val *= 1.5
+                prev_high_vol = high_vol
+                prep_high = _prepare_series(fixed_init_scale, candidate_tag="high-expand", bulb_radius_max_mm=high_val)
+                high_vol = float(prep_high["actual_volume_mm3"])
+                if high_vol <= prev_high_vol * 1.001:
+                    high_plateau_detected = True
+            if high_vol < volume_target_mm3:
+                volume_target_above_max_or_clipped = True
+                clipped_hint = bool(prep_high.get("clipped_target", False))
+                plateau_hint = bool(high_plateau_detected)
+                reason_bits = []
+                if clipped_hint:
+                    reason_bits.append("clipping")
+                if plateau_hint:
+                    reason_bits.append("volume plateau")
+                reason = ", ".join(reason_bits) if reason_bits else "bound-limited search"
+                print(
+                    f"  [warn] Requested target volume {volume_target_mm3:.1f} mm^3 could not be reached: "
+                    f"highest tested cpa_radius_effective_mm={high_val:.5f} produced {high_vol:.1f} mm^3 "
+                    f"(reason: {reason}). Using best-candidate fallback (volume_converged=false)."
+                )
+            best_prep = prep_low
+            best_ravd = abs(float(best_prep["actual_volume_mm3"]) - volume_target_mm3) / volume_target_mm3
+            high_ravd = abs(float(prep_high["actual_volume_mm3"]) - volume_target_mm3) / volume_target_mm3
+            if high_ravd < best_ravd:
+                best_prep = prep_high
+                best_ravd = high_ravd
+            volume_iterations = 0
+            volume_converged = False
+            for _ in range(volume_max_iterations):
+                volume_iterations += 1
+                mid_val = 0.5 * (low_val + high_val)
+                prep_mid = _prepare_series(fixed_init_scale, candidate_tag="mid", bulb_radius_max_mm=mid_val)
+                mid_vol = float(prep_mid["actual_volume_mm3"])
+                mid_ravd = abs(mid_vol - volume_target_mm3) / volume_target_mm3
+                if mid_ravd < best_ravd:
+                    best_ravd = mid_ravd
+                    best_prep = prep_mid
+                if mid_ravd <= volume_ravd_tolerance:
+                    volume_converged = True
+                    best_prep = prep_mid
+                    best_ravd = mid_ravd
+                    break
+                if mid_vol < volume_target_mm3:
+                    low_val = mid_val
+                else:
+                    high_val = mid_val
+            prepared = best_prep
+            cpa_radius_effective_mm = float(prepared["bulb_radius_max_mm"])
+            cpa_radius_override_active = cpa_radius_effective_mm > cpa_radius_anatomy_mm
+            volume_actual_mm3 = float(prepared["actual_volume_mm3"])
+            volume_ravd = best_ravd
+            volume_scale_final = cpa_radius_effective_mm
+        else:
+            volume_optimization_variable = "init_scale"
+            low_scale = 0.25
+            high_scale = 3.0
+            prep_low = _prepare_series(low_scale, candidate_tag="low", bulb_radius_max_mm=cpa_radius_effective_mm)
+            prep_high = _prepare_series(high_scale, candidate_tag="high", bulb_radius_max_mm=cpa_radius_effective_mm)
+            low_vol = float(prep_low["actual_volume_mm3"])
+            high_vol = float(prep_high["actual_volume_mm3"])
+            if high_vol < low_vol:
+                print(
+                    f"  [warn] Volume monotonicity sanity check failed: "
+                    f"scale {high_scale:.3f} produced {high_vol:.1f} mm^3 < {low_vol:.1f} mm^3 at scale {low_scale:.3f}"
+                )
+            for _ in range(8):
+                if low_vol <= volume_target_mm3:
+                    break
+                next_low_scale = low_scale / 1.5
+                if next_low_scale <= 1e-4:
+                    break
+                high_scale, prep_high, high_vol = low_scale, prep_low, low_vol
+                low_scale = next_low_scale
+                prep_low = _prepare_series(low_scale, candidate_tag="low-expand", bulb_radius_max_mm=cpa_radius_effective_mm)
+                low_vol = float(prep_low["actual_volume_mm3"])
+            if low_vol > volume_target_mm3:
+                volume_target_below_min = True
+                print(
+                    f"  [warn] Requested target volume {volume_target_mm3:.1f} mm^3 is below "
+                    f"minimum producible volume {low_vol:.1f} mm^3 at scale {low_scale:.5f}; "
+                    "using best-candidate fallback (volume_converged=false)."
+                )
+            high_expand_attempts = 8
+            high_plateau_detected = False
+            for _ in range(high_expand_attempts):
+                if high_vol >= volume_target_mm3:
+                    break
+                low_scale, prep_low, low_vol = high_scale, prep_high, high_vol
+                high_scale *= 1.5
+                prev_high_vol = high_vol
+                prep_high = _prepare_series(high_scale, candidate_tag="high-expand", bulb_radius_max_mm=cpa_radius_effective_mm)
+                high_vol = float(prep_high["actual_volume_mm3"])
+                if high_vol <= prev_high_vol * 1.001:
+                    high_plateau_detected = True
+            if high_vol < volume_target_mm3:
+                volume_target_above_max_or_clipped = True
+                clipped_hint = bool(prep_high.get("clipped_target", False))
+                plateau_hint = bool(high_plateau_detected)
+                reason_bits = []
+                if clipped_hint:
+                    reason_bits.append("clipping")
+                if plateau_hint:
+                    reason_bits.append("volume plateau")
+                reason = ", ".join(reason_bits) if reason_bits else "bound-limited search"
+                print(
+                    f"  [warn] Requested target volume {volume_target_mm3:.1f} mm^3 could not be reached: "
+                    f"highest tested scale={high_scale:.5f} produced {high_vol:.1f} mm^3 "
+                    f"(reason: {reason}). Using best-candidate fallback (volume_converged=false)."
+                )
+            best_prep = prep_low
+            best_ravd = abs(float(best_prep["actual_volume_mm3"]) - volume_target_mm3) / volume_target_mm3
+            high_ravd = abs(float(prep_high["actual_volume_mm3"]) - volume_target_mm3) / volume_target_mm3
+            if high_ravd < best_ravd:
+                best_prep = prep_high
+                best_ravd = high_ravd
+            volume_iterations = 0
+            volume_converged = False
+            for _ in range(volume_max_iterations):
+                volume_iterations += 1
+                mid_scale = 0.5 * (low_scale + high_scale)
+                prep_mid = _prepare_series(mid_scale, candidate_tag="mid", bulb_radius_max_mm=cpa_radius_effective_mm)
+                mid_vol = float(prep_mid["actual_volume_mm3"])
+                mid_ravd = abs(mid_vol - volume_target_mm3) / volume_target_mm3
+                if mid_ravd < best_ravd:
+                    best_ravd = mid_ravd
+                    best_prep = prep_mid
+                if mid_ravd <= volume_ravd_tolerance:
+                    volume_converged = True
+                    best_prep = prep_mid
+                    best_ravd = mid_ravd
+                    break
+                if mid_vol < volume_target_mm3:
+                    low_scale = mid_scale
+                else:
+                    high_scale = mid_scale
+            prepared = best_prep
+            volume_actual_mm3 = float(prepared["actual_volume_mm3"])
+            volume_ravd = best_ravd
+            scale_value = prepared["init_scale"]
+            volume_scale_final = None if scale_value is None else float(scale_value)
+        print(
+            f"  [volume] target={volume_target_mm3:.1f} mm^3 "
+            f"actual={volume_actual_mm3:.1f} mm^3 ravd={volume_ravd:.4f} "
+            f"converged={volume_converged} iters={volume_iterations} "
+            f"{volume_optimization_variable}={volume_scale_final}"
+        )
+        if not volume_converged and (volume_target_below_min or volume_target_above_max_or_clipped):
+            print(
+                "  [volume] non-converged result is expected under current bounds; "
+                "see warnings above for bound/plateau/clipping diagnostics."
+            )
+    else:
+        initial_scale: float | None = None
+        if t0_volume_fraction_of_seg is not None:
+            baseline = _generate_synthetic_series()
+            baseline_t0_vox = float(np.sum(baseline[1][0][0] > 0))  # 1 syn voxel = 1 mm^3
+            target_t0_volume_mm3 = float(seg_vol_mm3 * t0_volume_fraction_of_seg)
+            if baseline_t0_vox > 0.0 and target_t0_volume_mm3 > 0.0:
+                calibration_scale = float((target_t0_volume_mm3 / baseline_t0_vox) ** (1.0 / 3.0))
+                calibration_scale = float(np.clip(calibration_scale, 0.5, 3.0))
+                print(
+                    f"  [calibrate] target t0 volume={target_t0_volume_mm3:.1f} mm^3  "
+                    f"observed={baseline_t0_vox:.1f} mm^3  scale={calibration_scale:.3f}"
+                )
+                initial_scale = calibration_scale
+        prepared = _prepare_series(initial_scale)
+
+    syn_images = prepared["syn_images"]
+    syn_labels = prepared["syn_labels"]
+    voxel_counts = prepared["voxel_counts"]
+    smallest_idx = int(prepared["smallest_idx"])
+    last_idx = int(prepared["last_idx"])
+    syn_centroid = prepared["syn_centroid"]
+    comparison_results = prepared["comparison_results"]
+    default_orientation = prepared["default_orientation"]
+    seg_long_axis_vox = prepared["selected_axis_vox"]
+    seg_long_axis_phys = prepared["selected_axis_phys"]
+    rot_matrix = prepared["rot_matrix"]
+    target_timepoint_voxels = int(prepared["placed_target_voxels"])
+    target_timepoint_actual_volume_mm3 = float(prepared["actual_volume_mm3"])
+
+    print(f"  Generated {len(syn_images)} timepoints.")
+    for idx, cnt in enumerate(voxel_counts):
+        print(f"    t{idx}  day={dates[idx]:4d}  mask_voxels={cnt}")
+
+    print(f"\n  Smallest timepoint : t{smallest_idx}  (day {dates[smallest_idx]},  {voxel_counts[smallest_idx]} voxels)")
+    print(f"  Last timepoint     : t{last_idx}  (day {dates[last_idx]},  {voxel_counts[last_idx]} voxels) ← lollipop QC")
+    print(
+        f"  Volume target t/p  : {volume_target_timepoint_raw} -> "
+        f"t{volume_target_timepoint_index} (day {volume_target_timepoint_day}, "
+        f"vox={voxel_counts[volume_target_timepoint_index]})"
+    )
+    print(f"  Synthetic centroid (syn space) : {np.round(syn_centroid, 2)}")
 
     print("\n  Orientation strategy comparison:")
     for result in comparison_results:
@@ -1094,15 +1630,6 @@ def main(
         f"norm_gap={default_orientation.debug['normalized_gap']:.4f}"
     )
     print(f"  Selected axis     : vox={np.round(seg_long_axis_vox, 4)}  mm={np.round(seg_long_axis_phys, 4)}  (positive side = CPA bulb)")
-    try:
-        rot, _ = Rotation.align_vectors(
-            seg_long_axis_phys[np.newaxis],  # target (MRI physical space)
-            default_axis[np.newaxis],        # source (synthetic isotropic space)
-        )
-        rot_matrix = rot.as_matrix()
-    except Exception as exc:
-        print(f"  [warn] align_vectors failed ({exc}); using identity rotation.")
-        rot_matrix = np.eye(3)
     print(f"\n  Rotation matrix (synthetic mm axis → MRI physical axis):\n{np.round(rot_matrix, 4)}")
 
     # ── 6. Embed each timepoint ────────────────────────────────────────────────
@@ -1185,6 +1712,13 @@ def main(
         )
         print(f"    t{t_idx}  day={dates[t_idx]:4d}  placed_voxels={cnt}  centroid≈{ctr_str}{clip_note}")
 
+    # Final selected target-timepoint volume metrics (same objective index for all candidates).
+    target_timepoint_voxels = int(np.sum(all_embedded_masks[volume_target_timepoint_index] > 0))
+    target_timepoint_actual_volume_mm3 = float(target_timepoint_voxels) * voxel_volume_mm3
+    if volume_target_mm3 is not None:
+        volume_actual_mm3 = target_timepoint_actual_volume_mm3
+        volume_ravd = abs(volume_actual_mm3 - volume_target_mm3) / volume_target_mm3
+
     # Primary output = smallest timepoint
     emb_vol_small  = all_embedded_vols[smallest_idx]
     emb_mask_small = all_embedded_masks[smallest_idx]
@@ -1219,6 +1753,23 @@ def main(
         primary_placed_voxels=int(emb_mask_small.sum()),
         primary_centroid_offset_vox=offset_vox,
         primary_centroid_offset_mm=offset_mm_small,
+        cpa_radius_anatomy_mm=cpa_radius_anatomy_mm,
+        cpa_radius_effective_mm=cpa_radius_effective_mm,
+        cpa_radius_override_active=cpa_radius_override_active,
+        volume_optimization_variable=volume_optimization_variable,
+        target_volume_mm3=volume_target_mm3,
+        volume_target_timepoint=volume_target_timepoint_raw,
+        volume_target_timepoint_index=volume_target_timepoint_index,
+        volume_target_timepoint_day=volume_target_timepoint_day,
+        target_timepoint_actual_volume_mm3=target_timepoint_actual_volume_mm3,
+        target_timepoint_voxels=target_timepoint_voxels,
+        actual_volume_mm3=volume_actual_mm3,
+        ravd=volume_ravd,
+        volume_converged=volume_converged,
+        volume_iterations=volume_iterations,
+        volume_scale_final=volume_scale_final,
+        volume_target_below_min=volume_target_below_min,
+        volume_target_above_max_or_clipped=volume_target_above_max_or_clipped,
     )
     metrics_json_path, metrics_csv_path = write_case_reports(case_metrics, out_dir)
     audit_suffix = (
@@ -1283,11 +1834,33 @@ def main(
     print(f"  IAC canal length  : {iac_canal_mm:.1f} mm  = {iac_canal_syn:.1f} syn vox  [literature]")
     print(f"  Porus radius      : {iac_base_r_mm:.1f} mm  = {iac_base_r_syn:.1f} syn vox  [literature]")
     print(f"  Fundus radius     : {iac_apex_r_mm:.1f} mm  = {iac_apex_r_syn:.1f} syn vox  [literature]")
-    print(f"  CPA bulb radius   : {cpa_radius_mm:.1f} mm  = {cpa_radius_syn:.1f} syn vox  [from seg vol]")
+    print(
+        f"  CPA bulb radius   : anatomy={cpa_radius_anatomy_mm:.1f} mm, "
+        f"effective={cpa_radius_effective_mm:.1f} mm"
+        f"{' [override active]' if cpa_radius_override_active else ''}"
+    )
     print(f"  Seg volume        : {seg_vol_mm3:.0f} mm³")
     print(f"  Seed              : {seed}")
     print(f"  Dates             : {dates}")
     print(f"  Growth            : {growth}")
+    print(f"  Canal growth x    : {canal_growth_scale:.2f}")
+    print(f"  Bulb growth x     : {bulb_growth_scale:.2f}")
+    if target_tumor_volume_mm3 is not None:
+        print(f"  Target vol mm3    : {target_tumor_volume_mm3:.1f}")
+        print(f"  Vol opt variable  : {volume_optimization_variable}")
+        print(
+            f"  Target vol t/p    : {volume_target_timepoint_raw} -> "
+            f"t{volume_target_timepoint_index} day={volume_target_timepoint_day}"
+        )
+        print(f"  Target t/p voxels : {target_timepoint_voxels}")
+        print(f"  Actual vol mm3    : {volume_actual_mm3:.1f}" if volume_actual_mm3 is not None else "  Actual vol mm3    : n/a")
+        print(f"  RAVD              : {volume_ravd:.4f}" if volume_ravd is not None else "  RAVD              : n/a")
+        print(f"  Vol converged     : {volume_converged}")
+        print(f"  Vol iterations    : {volume_iterations}")
+        print(f"  Vol scale final   : {volume_scale_final:.4f}" if volume_scale_final is not None else "  Vol scale final   : n/a")
+    if t0_volume_fraction_of_seg is not None:
+        print(f"  T0 vol frac/seg   : {t0_volume_fraction_of_seg:.3f}")
+        print(f"  T0 calib scale    : {calibration_scale:.3f}" if calibration_scale is not None else "  T0 calib scale    : n/a")
     print(f"  Smallest t/p used : t{smallest_idx}  (day {dates[smallest_idx]},  "
           f"{voxel_counts[smallest_idx]} voxels)")
     print(f"  Last t/p (QC)     : t{last_idx}  (day {dates[last_idx]},  "
@@ -1341,6 +1914,20 @@ if __name__ == "__main__":
     parser.add_argument("--rad_max",  type=int, default=30, help="Max initial tumor radius")
     parser.add_argument("--growth",   default="steady",
                         choices=["steady", "decreasing", "fat-tailed", "stable"])
+    parser.add_argument("--canal_growth_scale", type=float, default=1.0,
+                        help="Multiplier for lollipop canal/stem growth increments")
+    parser.add_argument("--bulb_growth_scale", type=float, default=1.0,
+                        help="Multiplier for lollipop CPA bulb growth increments")
+    parser.add_argument("--target_tumor_volume_mm3", type=float, default=None,
+                        help="Optional target tumor volume (mm^3) for binary-search calibration")
+    parser.add_argument("--volume_target_timepoint", type=str, default="first",
+                        help="Timepoint objective for volume targeting: first, last, or integer index string")
+    parser.add_argument("--volume_ravd_tolerance", type=float, default=0.05,
+                        help="RAVD tolerance for volume calibration loop")
+    parser.add_argument("--volume_max_iterations", type=int, default=10,
+                        help="Maximum binary-search iterations for volume calibration")
+    parser.add_argument("--t0_volume_fraction_of_seg", type=float, default=None,
+                        help="Optional target fraction of real seg volume for synthetic t0 calibration")
     parser.add_argument("--seed", type=int, default=None,
                         help="Optional deterministic seed for synthetic series generation")
     parser.add_argument(
@@ -1358,6 +1945,13 @@ if __name__ == "__main__":
         rad_min=args.rad_min,
         rad_max=args.rad_max,
         growth=args.growth,
+        canal_growth_scale=args.canal_growth_scale,
+        bulb_growth_scale=args.bulb_growth_scale,
+        target_tumor_volume_mm3=args.target_tumor_volume_mm3,
+        volume_target_timepoint=args.volume_target_timepoint,
+        volume_ravd_tolerance=args.volume_ravd_tolerance,
+        volume_max_iterations=args.volume_max_iterations,
+        t0_volume_fraction_of_seg=args.t0_volume_fraction_of_seg,
         validate_anisotropy=args.validate_anisotropy,
         seed=args.seed,
     )

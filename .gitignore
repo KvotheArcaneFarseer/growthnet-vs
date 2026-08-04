@@ -115,5 +115,13 @@ temp/
 # Temp validation
 tmp_seed_validation/
 
+# GrowthNet local smoke outputs
+analysis/clinical_growth_law_validation/overlays/
+analysis/clinical_growth_law_validation/growth_law_overlay_smoke.csv
+analysis/clinical_growth_law_validation/scenario_sampling_audit.csv
+analysis/clinical_growth_law_validation/variant_smoke_timeline.csv
+analysis/clinical_growth_law_validation/variant_smoke_backgrounds.csv
+analysis/clinical_growth_law_validation/variant_smoke_output/
+
 !projects/vivit/src/data/synthetic.py
 .gitnexus

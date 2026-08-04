@@ -152,6 +152,8 @@ def create_synthetic_time_3d(
         canal_apex_radius_max: Optional[float] = None,    # max fundus radius (final timepoint)
         canal_length_max_override: Optional[float] = None,  # max canal length
         bulb_radius_max: Optional[float] = None,          # max CPA bulb radius
+        canal_growth_scale: float = 1.0,                 # scales canal/stem growth increments
+        bulb_growth_scale: float = 1.0,                  # scales CPA bulb growth increments
         # ── placement ─────────────────────────────────────────────────────────
         centered: bool = False,   # True → fix centroid at cube centre (avoids boundary clipping)
         random_state: Optional[object] = None
@@ -189,6 +191,10 @@ def create_synthetic_time_3d(
         geometry_mode : Literal["ellipsoid", "lollipop"] : Geometry generation mode.
             "ellipsoid" preserves legacy behavior.
         canal_axis : Literal["a", "b", "c"] : Internal canal axis used by "lollipop" mode.
+        canal_growth_scale : float : Multiplier for lollipop canal/stem growth increments.
+            Values >1 lengthen/thicken the canal faster; default 1.0 preserves existing behavior.
+        bulb_growth_scale : float : Multiplier for lollipop CPA bulb growth increments.
+            Values >1 enlarge the CPA bulb faster; default 1.0 preserves existing behavior.
         random_state : Optional[object] : Deterministic RNG source. Accepts
             np.random.Generator, np.random.RandomState, or None.
     
@@ -211,6 +217,10 @@ def create_synthetic_time_3d(
         raise ValueError(f"`geometry_mode` {geometry_mode} should be one of `ellipsoid`, `lollipop`.")
     if canal_axis not in ("a", "b", "c"):
         raise ValueError(f"`canal_axis` {canal_axis} should be one of `a`, `b`, `c`.")
+    if canal_growth_scale < 0.0:
+        raise ValueError(f"`canal_growth_scale` {canal_growth_scale} should be >= 0.")
+    if bulb_growth_scale < 0.0:
+        raise ValueError(f"`bulb_growth_scale` {bulb_growth_scale} should be >= 0.")
     
     # Create the list of images and labels
     images = []
@@ -295,16 +305,18 @@ def create_synthetic_time_3d(
             # Lollipop-only blended growth routing.
             if geometry_mode == "lollipop":
                 sg = float(sampled_growth) * 1.75
+                canal_sg = sg * float(canal_growth_scale)
+                bulb_sg = sg * float(bulb_growth_scale)
                 # Canal always grows toward max (caps naturally).
-                cyl_length  = min(cyl_length  + sg,        canal_length_max)
-                base_radius = min(base_radius + sg * 0.35, base_radius_max)
-                apex_radius = min(apex_radius + sg * 0.25, apex_radius_max)
+                cyl_length  = min(cyl_length  + canal_sg,        canal_length_max)
+                base_radius = min(base_radius + canal_sg * 0.35, base_radius_max)
+                apex_radius = min(apex_radius + canal_sg * 0.25, apex_radius_max)
                 # CPA growth accelerates over time so late timepoints form a clear bulb.
                 t_idx = i
                 n_times = len(dates)
                 time_frac = t_idx / max(1, n_times - 1)
                 cpa_weight = 0.5 + 3.0 * time_frac
-                cpa_radius  = min(cpa_radius + sg * cpa_weight, cpa_radius_max)
+                cpa_radius  = min(cpa_radius + bulb_sg * cpa_weight, cpa_radius_max)
         else:
             # Set the initial radius to somewhere between the min and 1/3 the maximum
             rad = int(rs.integers(rad_min, rad_max // 2))

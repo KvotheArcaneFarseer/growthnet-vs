@@ -13,13 +13,17 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import json
 import math
+import platform
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Mapping, Sequence, Tuple
 
 import nibabel as nib
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 
 # Keep repo-root import fix.
@@ -28,6 +32,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from projects.vivit.src.data.synthetic import create_synthetic_time_3d  # noqa: E402
+from shared.provenance import get_git_commit, sha256_file  # noqa: E402
 
 
 def _stable_seed(base_seed: int, case_id: str) -> int:
@@ -147,6 +152,119 @@ def _grid_and_radmax_from_scale(scale_vox: float) -> Tuple[int, int]:
     size = max(56, min(224, span))
     rad_max = max(6, min(size // 3, int(math.ceil(3.2 * scale_vox + 5.0))))
     return size, rad_max
+
+
+def _sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    return sha256_file(path, chunk_size=chunk_size)
+
+
+def _git_commit() -> str:
+    return get_git_commit(REPO_ROOT, unknown="UNKNOWN")
+
+
+def _lollipop_phase_state(case_seed: int, linear_scale_vox: float) -> Dict[str, float]:
+    _, rad_max = _grid_and_radmax_from_scale(scale_vox=linear_scale_vox)
+    rng = np.random.default_rng(case_seed ^ 0x1234ABCD)
+    _ = int(rng.integers(1, rad_max // 2))
+    return {
+        "cpa_lob_amp": float(rng.uniform(0.06, 0.12)),
+        "cpa_lob_phase_1": float(rng.uniform(0.0, 2.0 * np.pi)),
+        "cpa_lob_phase_2": float(rng.uniform(0.0, 2.0 * np.pi)),
+        "cpa_bias_1": float(rng.uniform(-0.16, 0.16)),
+        "cpa_bias_2": float(rng.uniform(-0.12, 0.12)),
+    }
+
+
+def _local_lollipop_coordinates(
+    coords_ijk: np.ndarray,
+    shape: Tuple[int, int, int],
+    rotation_zyx_deg: Sequence[int],
+    canal_axis: str,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    center = np.asarray([shape[0] // 2, shape[1] // 2, shape[2] // 2], dtype=float)
+    rel = coords_ijk.astype(float) - center.reshape(1, 3)
+    spy = rel[:, 0]
+    spx = rel[:, 1]
+    spz = rel[:, 2]
+    rot_matrix_inv = Rotation.from_euler("zyx", list(rotation_zyx_deg), degrees=True).as_matrix().T
+    spy_rotate = rot_matrix_inv[0, 0] * spy + rot_matrix_inv[0, 1] * spx + rot_matrix_inv[0, 2] * spz
+    spx_rotate = rot_matrix_inv[1, 0] * spy + rot_matrix_inv[1, 1] * spx + rot_matrix_inv[1, 2] * spz
+    spz_rotate = rot_matrix_inv[2, 0] * spy + rot_matrix_inv[2, 1] * spx + rot_matrix_inv[2, 2] * spz
+    if canal_axis == "a":
+        canal_coord, perp1_coord, perp2_coord = spx_rotate, spy_rotate, spz_rotate
+    elif canal_axis == "b":
+        canal_coord, perp1_coord, perp2_coord = spy_rotate, spx_rotate, spz_rotate
+    else:
+        canal_coord, perp1_coord, perp2_coord = spz_rotate, spx_rotate, spy_rotate
+    return -canal_coord, perp1_coord, perp2_coord
+
+
+def _lollipop_compartment_labels(
+    mask_shape: Tuple[int, int, int],
+    mask: np.ndarray,
+    geometry: Mapping[str, float],
+    case_seed: int,
+    canal_axis: str,
+    rotation_zyx_deg: Sequence[int],
+    linear_scale_vox: float,
+) -> np.ndarray:
+    """Return uint8 compartment labels: 0 bg, 1 stem, 2 transition, 3 bulb."""
+    coords = np.argwhere(np.asarray(mask, dtype=bool))
+    labels = np.zeros(mask_shape, dtype=np.uint8)
+    if coords.size == 0:
+        return labels
+    x_rel, perp1_coord, perp2_coord = _local_lollipop_coordinates(
+        coords_ijk=coords,
+        shape=mask_shape,
+        rotation_zyx_deg=rotation_zyx_deg,
+        canal_axis=canal_axis,
+    )
+    phase = _lollipop_phase_state(case_seed=case_seed, linear_scale_vox=linear_scale_vox)
+    rho = np.sqrt(perp1_coord ** 2 + perp2_coord ** 2)
+    br = float(geometry["canal_base_radius_init"])
+    ar = float(geometry["canal_apex_radius_init"])
+    cl = float(geometry["canal_length_init"])
+    cr = float(geometry["bulb_radius_init"])
+
+    r_porus = np.sqrt(np.maximum(0.0, br ** 2 - x_rel ** 2))
+    porus = (x_rel >= -br) & (x_rel <= 0.0) & (rho <= r_porus)
+    t_canal = np.clip(x_rel / cl, 0.0, 1.0) if cl > 0.0 else np.zeros_like(x_rel)
+    r_canal = ar + (br - ar) * (1.0 - t_canal) ** 1.5
+    canal_body = (x_rel >= 0.0) & (x_rel <= cl) & (rho <= r_canal)
+    r_fundus = np.sqrt(np.maximum(0.0, ar ** 2 - (x_rel - cl) ** 2))
+    fundus = (x_rel > cl) & (x_rel <= cl + ar) & (rho <= r_fundus)
+    canal_like = porus | canal_body | fundus
+
+    if cr > 0.0:
+        cpa_ctr = max(br * 1.2, cr * 0.75)
+        cpa_ax_r = min(br * 0.7, cr * 0.45)
+        cpa_eq_r = cr
+        theta = np.arctan2(perp2_coord, perp1_coord)
+        lobulation = 1.0 + phase["cpa_lob_amp"] * (
+            0.65 * np.sin(2.0 * theta + phase["cpa_lob_phase_1"])
+            + 0.35 * np.sin(3.0 * theta + phase["cpa_lob_phase_2"])
+        )
+        cpa_eq_r_mod = np.maximum(cpa_eq_r * lobulation, cpa_eq_r * 0.82)
+        cpa_perp1_ctr = phase["cpa_bias_1"] * cpa_eq_r
+        cpa_perp2_ctr = phase["cpa_bias_2"] * cpa_eq_r
+        cpa_rho = np.sqrt((perp1_coord - cpa_perp1_ctr) ** 2 + (perp2_coord - cpa_perp2_ctr) ** 2)
+        cpa_dist = ((x_rel + cpa_ctr) / cpa_ax_r) ** 2 + (cpa_rho / cpa_eq_r_mod) ** 2
+        cpa = (cpa_dist <= 1.0) & (x_rel <= 0.0)
+    else:
+        cpa = np.zeros_like(canal_like, dtype=bool)
+
+    transition = porus & cpa
+    stem = canal_like & ~transition
+    bulb = cpa & ~transition
+    flat_labels = np.zeros(coords.shape[0], dtype=np.uint8)
+    flat_labels[stem] = 1
+    flat_labels[transition] = 2
+    flat_labels[bulb] = 3
+    # Discretization can occasionally leave a boundary voxel outside analytic
+    # compartments; keep the exported label union equal to the saved mask.
+    flat_labels[flat_labels == 0] = 1
+    labels[coords[:, 0], coords[:, 1], coords[:, 2]] = flat_labels
+    return labels
 
 
 def _generate_one_mask(
@@ -296,8 +414,45 @@ def _save_mask(mask: np.ndarray, spacing_mm: Tuple[float, float, float], out_pat
     nib.save(nii, str(out_path))
 
 
+def _save_compartment_labels(labels: np.ndarray, spacing_mm: Tuple[float, float, float], out_path: Path) -> None:
+    _save_mask(mask=labels.astype(np.uint8), spacing_mm=spacing_mm, out_path=out_path)
+
+
 def _safe_case_id(case_id: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in case_id).strip("_") or "case"
+
+
+def _build_provenance_payload(
+    args_dict: Mapping[str, object],
+    targets_csv: Path,
+    manifest_csv: Path,
+    out_dir: Path,
+    mask_rows: Sequence[Mapping[str, object]],
+    spacing_mm: Tuple[float, float, float],
+    compartment_labels_enabled: bool,
+) -> Dict[str, object]:
+    return {
+        "schema_version": "synthetic_lollipop_provenance_v1",
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "git_commit": _git_commit(),
+        "python_version": platform.python_version(),
+        "numpy_version": np.__version__,
+        "nibabel_version": nib.__version__,
+        "generator_script": str(Path(__file__).resolve().relative_to(REPO_ROOT)),
+        "generator_script_sha256": _sha256_file(Path(__file__).resolve()),
+        "synthetic_module": "projects/vivit/src/data/synthetic.py",
+        "synthetic_module_sha256": _sha256_file(REPO_ROOT / "projects" / "vivit" / "src" / "data" / "synthetic.py"),
+        "targets_csv": str(targets_csv),
+        "targets_csv_sha256": _sha256_file(targets_csv),
+        "manifest_csv": str(manifest_csv),
+        "manifest_csv_sha256": _sha256_file(manifest_csv),
+        "out_dir": str(out_dir),
+        "spacing_mm": list(spacing_mm),
+        "compartment_labels_enabled": bool(compartment_labels_enabled),
+        "run_parameters": dict(args_dict),
+        "case_count": int(len(mask_rows)),
+        "cases": list(mask_rows),
+    }
 
 
 def main() -> int:
@@ -314,6 +469,12 @@ def main() -> int:
     p.add_argument("--max_calibration_iters", type=int, default=14)
     p.add_argument("--min_scale_vox", type=float, default=0.08)
     p.add_argument("--max_scale_vox", type=float, default=64.0)
+    p.add_argument("--provenance_json", type=str, default=None, help="Optional provenance sidecar JSON path")
+    p.add_argument(
+        "--write_compartment_labels",
+        action="store_true",
+        help="Also write uint8 compartment labels: 0 background, 1 stem, 2 transition, 3 CPA/bulb",
+    )
     args = p.parse_args()
 
     targets_csv = Path(args.targets_csv).expanduser().resolve()
@@ -356,26 +517,47 @@ def main() -> int:
         case_name = _safe_case_id(case_id)
         seg_path = out_dir / f"{case_name}_synthetic_lollipop_mask.nii.gz"
         _save_mask(mask=mask, spacing_mm=spacing_mm, out_path=seg_path)
+        label_path = None
+        if args.write_compartment_labels:
+            geom_rng = np.random.default_rng(case_seed ^ 0xBADC0DE)
+            geom = _map_scale_to_lollipop_geometry(
+                linear_scale_vox=float(final_scale),
+                target_volume_mm3=float(target_volume_mm3),
+                rng=geom_rng,
+            )
+            compartment_labels = _lollipop_compartment_labels(
+                mask_shape=mask.shape,
+                mask=mask > 0,
+                geometry=geom,
+                case_seed=case_seed,
+                canal_axis=args.canal_axis,
+                rotation_zyx_deg=rotation_zyx_deg,
+                linear_scale_vox=float(final_scale),
+            )
+            label_path = out_dir / f"{case_name}_synthetic_lollipop_compartments.nii.gz"
+            _save_compartment_labels(labels=compartment_labels, spacing_mm=spacing_mm, out_path=label_path)
 
         vol_err = float(realized_volume_mm3 - target_volume_mm3)
         vol_err_frac = float(abs(vol_err) / max(target_volume_mm3, 1e-8))
 
-        manifest_rows.append(
-            {
-                "case_id": case_id,
-                "seg_path": str(seg_path),
-                "target_volume_mm3": float(target_volume_mm3),
-                "realized_volume_mm3": float(realized_volume_mm3),
-                "volume_error_mm3": vol_err,
-                "volume_error_fraction": vol_err_frac,
-                "n_calibration_iters": int(n_iters),
-                "final_linear_scale_vox": float(final_scale),
-                "rotation_z_deg": int(rotation_zyx_deg[0]),
-                "rotation_y_deg": int(rotation_zyx_deg[1]),
-                "rotation_x_deg": int(rotation_zyx_deg[2]),
-                "seed": int(case_seed),
-            }
-        )
+        manifest_row = {
+            "case_id": case_id,
+            "seg_path": str(seg_path),
+            "target_volume_mm3": float(target_volume_mm3),
+            "realized_volume_mm3": float(realized_volume_mm3),
+            "volume_error_mm3": vol_err,
+            "volume_error_fraction": vol_err_frac,
+            "n_calibration_iters": int(n_iters),
+            "final_linear_scale_vox": float(final_scale),
+            "rotation_z_deg": int(rotation_zyx_deg[0]),
+            "rotation_y_deg": int(rotation_zyx_deg[1]),
+            "rotation_x_deg": int(rotation_zyx_deg[2]),
+            "seed": int(case_seed),
+        }
+        if label_path is not None:
+            manifest_row["compartment_label_path"] = str(label_path)
+            manifest_row["compartment_label_schema"] = "0=background;1=stem_canal;2=transition;3=cpa_bulb"
+        manifest_rows.append(manifest_row)
 
     fieldnames = [
         "case_id",
@@ -391,15 +573,36 @@ def main() -> int:
         "rotation_x_deg",
         "seed",
     ]
+    if args.write_compartment_labels:
+        fieldnames.extend(["compartment_label_path", "compartment_label_schema"])
     with manifest_csv.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(manifest_rows)
 
+    if args.provenance_json:
+        provenance_path = Path(args.provenance_json).expanduser().resolve()
+    else:
+        provenance_path = out_dir / "synthetic_lollipop_provenance.json" if args.write_compartment_labels else None
+    if provenance_path is not None:
+        provenance_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = _build_provenance_payload(
+            args_dict={key: value for key, value in vars(args).items() if key != "provenance_json"},
+            targets_csv=targets_csv,
+            manifest_csv=manifest_csv,
+            out_dir=out_dir,
+            mask_rows=manifest_rows,
+            spacing_mm=spacing_mm,
+            compartment_labels_enabled=bool(args.write_compartment_labels),
+        )
+        provenance_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
     print("Synthetic lollipop cohort generation complete")
     print(f"  cases: {len(manifest_rows)}")
     print(f"  out_dir: {out_dir}")
     print(f"  manifest: {manifest_csv}")
+    if provenance_path is not None:
+        print(f"  provenance: {provenance_path}")
 
     return 0
 

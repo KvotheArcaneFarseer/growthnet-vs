@@ -8,7 +8,10 @@ import pytest
 
 from projects.vivit.src.data.synthetic import create_synthetic_time_3d
 from scripts.generate_synthetic_lollipop_cohort import (
+    _build_provenance_payload,
     _calibrate_scale,
+    _lollipop_compartment_labels,
+    _map_scale_to_lollipop_geometry,
     _parse_spacing,
     _read_targets,
     _safe_case_id,
@@ -66,6 +69,73 @@ def test_volume_mm3_uses_voxel_count_and_spacing_product():
     mask[1:3, 1:3, 1:2] = 1
 
     assert _volume_mm3(mask, voxel_volume_mm3=2.5) == pytest.approx(10.0)
+
+
+def test_lollipop_compartment_labels_are_disjoint_and_cover_mask():
+    seed = 12345
+    rng_geom = np.random.default_rng(seed ^ 0xBADC0DE)
+    geom = _map_scale_to_lollipop_geometry(
+        linear_scale_vox=14.0,
+        target_volume_mm3=1500.0,
+        rng=rng_geom,
+    )
+    mask, scale, realized_volume, n_iters = _calibrate_scale(
+        target_volume_mm3=1500.0,
+        case_seed=seed,
+        canal_axis="c",
+        rotation_zyx_deg=[10, 20, 30],
+        voxel_volume_mm3=1.0,
+        tolerance_frac=0.20,
+        max_iters=4,
+        min_scale_vox=4.0,
+        max_scale_vox=18.0,
+    )
+    geom = _map_scale_to_lollipop_geometry(
+        linear_scale_vox=scale,
+        target_volume_mm3=1500.0,
+        rng=np.random.default_rng(seed ^ 0xBADC0DE),
+    )
+    labels = _lollipop_compartment_labels(
+        mask_shape=mask.shape,
+        mask=mask > 0,
+        geometry=geom,
+        case_seed=seed,
+        canal_axis="c",
+        rotation_zyx_deg=[10, 20, 30],
+        linear_scale_vox=scale,
+    )
+
+    assert labels.dtype == np.uint8
+    assert set(np.unique(labels)).issubset({0, 1, 2, 3})
+    assert np.array_equal(labels > 0, mask > 0)
+    assert int((labels == 1).sum()) + int((labels == 2).sum()) + int((labels == 3).sum()) == int(mask.sum())
+    assert realized_volume > 0
+    assert n_iters > 0
+
+
+def test_build_provenance_payload_records_reproducible_schema(tmp_path: Path):
+    targets = tmp_path / "targets.csv"
+    targets.write_text("case_id,target_volume_mm3\ncase-a,125\n")
+    manifest = tmp_path / "manifest.csv"
+    manifest.write_text("case_id,seg_path\ncase-a,case-a.nii.gz\n")
+
+    payload = _build_provenance_payload(
+        args_dict={"seed": 7, "voxel_spacing_mm": "1,1,1"},
+        targets_csv=targets,
+        manifest_csv=manifest,
+        out_dir=tmp_path,
+        mask_rows=[{"case_id": "case-a", "seg_path": "case-a.nii.gz"}],
+        spacing_mm=(1.0, 1.0, 1.0),
+        compartment_labels_enabled=True,
+    )
+
+    assert payload["schema_version"] == "synthetic_lollipop_provenance_v1"
+    assert payload["generator_script"].endswith("scripts/generate_synthetic_lollipop_cohort.py")
+    assert payload["targets_csv_sha256"]
+    assert payload["manifest_csv_sha256"]
+    assert payload["run_parameters"]["seed"] == 7
+    assert payload["compartment_labels_enabled"] is True
+    assert payload["cases"][0]["case_id"] == "case-a"
 
 
 def test_create_synthetic_time_3d_is_deterministic_for_fixed_generator_seed():

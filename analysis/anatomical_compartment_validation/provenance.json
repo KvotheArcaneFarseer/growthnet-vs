@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-07-18T12:46:16.718395+00:00",
+  "git_commit": "b7db1cc55f708ed71f4a9b11da1aef5cc27e3f5e",
+  "script": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/analysis/anatomical_compartment_validation/analyze_synthetic_compartments.py",
+  "script_sha256": "a544fd98efb8b24119bbb48bf45277d1778b7c09e51e3f7c178948687e83118b",
+  "manifest": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/manifests/synthetic_lollipop_manifest.csv",
+  "manifest_sha256": "08809ebfce66aad6d76a35672936e85849404c183553249700f6ea4689d85e93",
+  "mask_root": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks",
+  "case_count": 261,
+  "generator_files": [
+    "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/projects/vivit/src/data/synthetic.py",
+    "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/scripts/generate_synthetic_lollipop_cohort.py"
+  ]
+}

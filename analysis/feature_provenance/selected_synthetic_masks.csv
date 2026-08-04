@@ -1,0 +1,13 @@
+case_id,seg_path,target_volume_mm3,realized_volume_mm3,pulled_volume_mm3,volume_stratum
+439_0_0,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/439_0_0_synthetic_lollipop.nii.gz,7.75,8.0,42.0,small
+492_1_391,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/492_1_391_synthetic_lollipop.nii.gz,8.5,9.0,44.0,small
+235_0_0,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/235_0_0_synthetic_lollipop.nii.gz,8.875,9.0,41.0,small
+301_0_0,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/301_0_0_synthetic_lollipop.nii.gz,12.25,12.0,43.0,small
+434_0_0,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/434_0_0_synthetic_lollipop.nii.gz,107.75,106.0,105.0,medium
+593_3_2370,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/593_3_2370_synthetic_lollipop.nii.gz,111.5,109.0,116.0,medium
+434_1_160,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/434_1_160_synthetic_lollipop.nii.gz,270.375,278.0,258.0,medium
+595_3_1268,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/595_3_1268_synthetic_lollipop.nii.gz,636.125,645.0,605.0,large
+304_1_206,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/304_1_206_synthetic_lollipop.nii.gz,643.875,648.0,612.0,large
+132_0_0,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/132_0_0_synthetic_lollipop.nii.gz,7679.75,7674.0,7663.0,large
+540_3_1126,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/540_3_1126_synthetic_lollipop.nii.gz,8889.625,8893.0,8901.0,large
+132_1_148,/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/132_1_148_synthetic_lollipop.nii.gz,10363.5,10057.0,10268.0,large

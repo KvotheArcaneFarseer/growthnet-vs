@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-07-18T13:06:10.528680+00:00",
+  "git_commit": "b7db1cc55f708ed71f4a9b11da1aef5cc27e3f5e",
+  "manifest": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/manifests/synthetic_lollipop_manifest.csv",
+  "selected_cases": [
+    "439_0_0",
+    "664_0_0",
+    "611_2_466",
+    "527_3_625",
+    "126_5_1607",
+    "527_2_591",
+    "577_1_239",
+    "579_1_198",
+    "560_1_146",
+    "690_0_0"
+  ],
+  "current_generator_hash": "716070b9fa4cfb8ad01377ed88ab0e0b75c5fa87310ace79a8ebe0d29f094efa",
+  "pulled_generator_hash": "6efdc3f3b4e161e96f30ad2d0f843aaf786b8bcbc421b7b19b920059c84e5ab9",
+  "synthetic_py_hash": "bfc5e49871d3d92e28bdfa46b977562afd30569654bd16e2983d5b575b78f566"
+}

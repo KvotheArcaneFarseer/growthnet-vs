@@ -1,0 +1,1131 @@
+{
+  "features": [
+    {
+      "case_id": "439_0_0",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/439_0_0_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 8,
+      "volume_mm3": 8.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 8,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        33.0,
+        32.875,
+        32.875
+      ],
+      "centroid_mm": [
+        33.0,
+        32.875,
+        32.875
+      ],
+      "bounding_box_min_vox": [
+        32.0,
+        32.0,
+        32.0
+      ],
+      "bounding_box_max_vox": [
+        34.0,
+        34.0,
+        34.0
+      ],
+      "bounding_box_size_vox": [
+        3.0,
+        3.0,
+        3.0
+      ],
+      "bounding_box_size_mm": [
+        3.0,
+        3.0,
+        3.0
+      ],
+      "principal_axis_vector_vox": [
+        0.0,
+        0.7071067811865476,
+        0.7071067811865476
+      ],
+      "principal_axis_vector_mm": [
+        0.0,
+        0.7071067811865476,
+        0.7071067811865476
+      ],
+      "principal_axis_lengths_mm": [
+        2.9277002188455996,
+        2.138089935299395,
+        2.138089935299395
+      ],
+      "principal_axis_length_major_mm": 2.1213203435596424,
+      "principal_axis_length_minor1_mm": 2.0,
+      "principal_axis_length_minor2_mm": 1.414213562373095,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 2.4814019635976,
+      "max_diameter_bbox_mm": 3.0,
+      "bbox_volume_mm3": 27.0,
+      "bbox_fill_fraction": 0.2962962962962963,
+      "flatness": 1.0,
+      "aspect_ratio_major_to_minor2": 1.3693063937629153,
+      "elongation_legacy_major_to_minor2": 1.3693063937629153,
+      "elongation": 1.3693063937629153,
+      "secondary_axis_ratio": 0.7302967433402215,
+      "surface_area_mm2": 17.68483543395996,
+      "sphericity": 1.09381303096843,
+      "compactness": 86.42175760813122,
+      "surface_to_volume_ratio": 2.210604429244995,
+      "roughness_index": 0.9142330285776805,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "492_1_391",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/492_1_391_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 9,
+      "volume_mm3": 9.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 9,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        33.888888888888886,
+        33.888888888888886,
+        34.22222222222222
+      ],
+      "centroid_mm": [
+        33.888888888888886,
+        33.888888888888886,
+        34.22222222222222
+      ],
+      "bounding_box_min_vox": [
+        33.0,
+        33.0,
+        33.0
+      ],
+      "bounding_box_max_vox": [
+        35.0,
+        35.0,
+        35.0
+      ],
+      "bounding_box_size_vox": [
+        3.0,
+        3.0,
+        3.0
+      ],
+      "bounding_box_size_mm": [
+        3.0,
+        3.0,
+        3.0
+      ],
+      "principal_axis_vector_vox": [
+        -0.408248290463863,
+        -0.4082482904638631,
+        0.816496580927726
+      ],
+      "principal_axis_vector_mm": [
+        -0.408248290463863,
+        -0.4082482904638631,
+        0.816496580927726
+      ],
+      "principal_axis_lengths_mm": [
+        2.9439202887759484,
+        2.449489742783178,
+        1.9999999999999996
+      ],
+      "principal_axis_length_major_mm": 2.0412414523193148,
+      "principal_axis_length_minor1_mm": 1.4142135623730947,
+      "principal_axis_length_minor2_mm": 1.1547005383792512,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 2.5807620414842987,
+      "max_diameter_bbox_mm": 3.0,
+      "bbox_volume_mm3": 27.0,
+      "bbox_fill_fraction": 0.3333333333333333,
+      "flatness": 0.8164965809277259,
+      "aspect_ratio_major_to_minor2": 1.4719601443879744,
+      "elongation_legacy_major_to_minor2": 1.4719601443879744,
+      "elongation": 1.201850425154663,
+      "secondary_axis_ratio": 0.8320502943378438,
+      "surface_area_mm2": 19.440126419067383,
+      "sphericity": 1.0763331408508956,
+      "compactness": 90.70103347390925,
+      "surface_to_volume_ratio": 2.1600140465630426,
+      "roughness_index": 0.9290803767404668,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "235_0_0",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/235_0_0_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 9,
+      "volume_mm3": 9.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 9,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        34.77777777777778,
+        34.888888888888886,
+        35.111111111111114
+      ],
+      "centroid_mm": [
+        34.77777777777778,
+        34.888888888888886,
+        35.111111111111114
+      ],
+      "bounding_box_min_vox": [
+        34.0,
+        34.0,
+        34.0
+      ],
+      "bounding_box_max_vox": [
+        36.0,
+        36.0,
+        36.0
+      ],
+      "bounding_box_size_vox": [
+        3.0,
+        3.0,
+        3.0
+      ],
+      "bounding_box_size_mm": [
+        3.0,
+        3.0,
+        3.0
+      ],
+      "principal_axis_vector_vox": [
+        -0.8164965809277261,
+        -0.40824829046386296,
+        0.408248290463863
+      ],
+      "principal_axis_vector_mm": [
+        -0.8164965809277261,
+        -0.40824829046386296,
+        0.408248290463863
+      ],
+      "principal_axis_lengths_mm": [
+        2.9439202887759492,
+        2.449489742783178,
+        2.0
+      ],
+      "principal_axis_length_major_mm": 2.041241452319315,
+      "principal_axis_length_minor1_mm": 1.4142135623730951,
+      "principal_axis_length_minor2_mm": 1.1547005383792517,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 2.5807620414842987,
+      "max_diameter_bbox_mm": 3.0,
+      "bbox_volume_mm3": 27.0,
+      "bbox_fill_fraction": 0.3333333333333333,
+      "flatness": 0.8164965809277261,
+      "aspect_ratio_major_to_minor2": 1.4719601443879746,
+      "elongation_legacy_major_to_minor2": 1.4719601443879746,
+      "elongation": 1.2018504251546633,
+      "secondary_axis_ratio": 0.8320502943378435,
+      "surface_area_mm2": 19.440128326416016,
+      "sphericity": 1.0763330352475524,
+      "compactness": 90.70106017103645,
+      "surface_to_volume_ratio": 2.1600142584906683,
+      "roughness_index": 0.9290804678962621,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "301_0_0",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/301_0_0_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 12,
+      "volume_mm3": 12.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 12,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        35.916666666666664,
+        36.083333333333336,
+        36.333333333333336
+      ],
+      "centroid_mm": [
+        35.916666666666664,
+        36.083333333333336,
+        36.333333333333336
+      ],
+      "bounding_box_min_vox": [
+        35.0,
+        35.0,
+        35.0
+      ],
+      "bounding_box_max_vox": [
+        37.0,
+        37.0,
+        37.0
+      ],
+      "bounding_box_size_vox": [
+        3.0,
+        3.0,
+        3.0
+      ],
+      "bounding_box_size_mm": [
+        3.0,
+        3.0,
+        3.0
+      ],
+      "principal_axis_vector_vox": [
+        -0.6666666666666667,
+        0.6666666666666667,
+        -0.3333333333333333
+      ],
+      "principal_axis_vector_mm": [
+        -0.6666666666666666,
+        0.6666666666666666,
+        -0.33333333333333326
+      ],
+      "principal_axis_lengths_mm": [
+        2.9541957835039856,
+        2.558408596267325,
+        2.412090756622109
+      ],
+      "principal_axis_length_major_mm": 2.333333333333333,
+      "principal_axis_length_minor1_mm": 2.121320343559643,
+      "principal_axis_length_minor2_mm": 1.4142135623730951,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 2.840496169229977,
+      "max_diameter_bbox_mm": 3.0,
+      "bbox_volume_mm3": 27.0,
+      "bbox_fill_fraction": 0.4444444444444444,
+      "flatness": 0.9428090415820635,
+      "aspect_ratio_major_to_minor2": 1.224744871391589,
+      "elongation_legacy_major_to_minor2": 1.224744871391589,
+      "elongation": 1.1547005383792517,
+      "secondary_axis_ratio": 0.8660254037844385,
+      "surface_area_mm2": 24.2685546875,
+      "sphericity": 1.0444661650655158,
+      "compactness": 99.25885156425001,
+      "surface_to_volume_ratio": 2.0223795572916665,
+      "roughness_index": 0.9574268975359995,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "434_0_0",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/434_0_0_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 106,
+      "volume_mm3": 106.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 106,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        55.471698113207545,
+        55.91509433962264,
+        56.0377358490566
+      ],
+      "centroid_mm": [
+        55.471698113207545,
+        55.91509433962264,
+        56.0377358490566
+      ],
+      "bounding_box_min_vox": [
+        53.0,
+        53.0,
+        54.0
+      ],
+      "bounding_box_max_vox": [
+        58.0,
+        58.0,
+        58.0
+      ],
+      "bounding_box_size_vox": [
+        6.0,
+        6.0,
+        5.0
+      ],
+      "bounding_box_size_mm": [
+        6.0,
+        6.0,
+        5.0
+      ],
+      "principal_axis_vector_vox": [
+        -0.9938128529799833,
+        -0.11056025180605639,
+        0.010603960220948325
+      ],
+      "principal_axis_vector_mm": [
+        -0.9938128529799833,
+        -0.11056025180605639,
+        0.010603960220948325
+      ],
+      "principal_axis_lengths_mm": [
+        5.8568142184308485,
+        5.109244576003118,
+        4.813969199560936
+      ],
+      "principal_axis_length_major_mm": 5.311348980539034,
+      "principal_axis_length_minor1_mm": 5.097775649990719,
+      "principal_axis_length_minor2_mm": 4.586863405366613,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 5.871770611970456,
+      "max_diameter_bbox_mm": 6.0,
+      "bbox_volume_mm3": 180.0,
+      "bbox_fill_fraction": 0.5888888888888889,
+      "flatness": 0.942207625403368,
+      "aspect_ratio_major_to_minor2": 1.2166289345941446,
+      "elongation_legacy_major_to_minor2": 1.2166289345941446,
+      "elongation": 1.1463170594609784,
+      "secondary_axis_ratio": 0.8723589967946741,
+      "surface_area_mm2": 111.47822570800781,
+      "sphericity": 0.9716234475796814,
+      "compactness": 123.29867597524806,
+      "surface_to_volume_ratio": 1.0516813746038474,
+      "roughness_index": 1.029205298092594,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "593_3_2370",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/593_3_2370_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 109,
+      "volume_mm3": 109.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 109,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        54.972477064220186,
+        54.77064220183486,
+        54.48623853211009
+      ],
+      "centroid_mm": [
+        54.972477064220186,
+        54.77064220183486,
+        54.48623853211009
+      ],
+      "bounding_box_min_vox": [
+        53.0,
+        52.0,
+        52.0
+      ],
+      "bounding_box_max_vox": [
+        57.0,
+        57.0,
+        57.0
+      ],
+      "bounding_box_size_vox": [
+        5.0,
+        6.0,
+        6.0
+      ],
+      "bounding_box_size_mm": [
+        5.0,
+        6.0,
+        6.0
+      ],
+      "principal_axis_vector_vox": [
+        0.08651657986150263,
+        0.3373244786906109,
+        0.9374044364548185
+      ],
+      "principal_axis_vector_mm": [
+        0.08651657986150263,
+        0.3373244786906109,
+        0.9374044364548185
+      ],
+      "principal_axis_lengths_mm": [
+        5.8246276733578926,
+        5.185229895484916,
+        4.943020398745975
+      ],
+      "principal_axis_length_major_mm": 5.785512198207426,
+      "principal_axis_length_minor1_mm": 5.133269029748667,
+      "principal_axis_length_minor2_mm": 4.787469378615063,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 5.926650153721812,
+      "max_diameter_bbox_mm": 6.0,
+      "bbox_volume_mm3": 180.0,
+      "bbox_fill_fraction": 0.6055555555555555,
+      "flatness": 0.9532885712647288,
+      "aspect_ratio_major_to_minor2": 1.178353962454935,
+      "elongation_legacy_major_to_minor2": 1.178353962454935,
+      "elongation": 1.1233113653127969,
+      "secondary_axis_ratio": 0.8902251244663053,
+      "surface_area_mm2": 115.67645263671875,
+      "sphericity": 0.9539453480122162,
+      "compactness": 130.2812419676033,
+      "surface_to_volume_ratio": 1.0612518590524656,
+      "roughness_index": 1.0482780822651425,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "434_1_160",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/434_1_160_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 278,
+      "volume_mm3": 278.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 278,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        65.13309352517986,
+        65.9748201438849,
+        65.8273381294964
+      ],
+      "centroid_mm": [
+        65.13309352517986,
+        65.9748201438849,
+        65.8273381294964
+      ],
+      "bounding_box_min_vox": [
+        61.0,
+        63.0,
+        62.0
+      ],
+      "bounding_box_max_vox": [
+        69.0,
+        69.0,
+        69.0
+      ],
+      "bounding_box_size_vox": [
+        9.0,
+        7.0,
+        8.0
+      ],
+      "bounding_box_size_mm": [
+        9.0,
+        7.0,
+        8.0
+      ],
+      "principal_axis_vector_vox": [
+        -0.9772781436464103,
+        -0.024586279526831668,
+        -0.21053015178366938
+      ],
+      "principal_axis_vector_mm": [
+        -0.9772781436464103,
+        -0.024586279526831668,
+        -0.21053015178366938
+      ],
+      "principal_axis_lengths_mm": [
+        8.349532563064871,
+        6.783236509849179,
+        6.742667499571311
+      ],
+      "principal_axis_length_major_mm": 8.474401884049122,
+      "principal_axis_length_minor1_mm": 7.048634665762222,
+      "principal_axis_length_minor2_mm": 6.188186390579144,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 8.097458381330195,
+      "max_diameter_bbox_mm": 9.0,
+      "bbox_volume_mm3": 504.0,
+      "bbox_fill_fraction": 0.5515873015873016,
+      "flatness": 0.9940192251561681,
+      "aspect_ratio_major_to_minor2": 1.2383129619836246,
+      "elongation_legacy_major_to_minor2": 1.2383129619836246,
+      "elongation": 1.2309068909718022,
+      "secondary_axis_ratio": 0.8124091329202805,
+      "surface_area_mm2": 224.7103729248047,
+      "sphericity": 0.9166936042170549,
+      "compactness": 146.81815751324325,
+      "surface_to_volume_ratio": 0.8083106939741176,
+      "roughness_index": 1.0908770339399245,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "595_3_1268",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/595_3_1268_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 645,
+      "volume_mm3": 645.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 645,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        68.24031007751938,
+        70.08992248062016,
+        69.14418604651163
+      ],
+      "centroid_mm": [
+        68.24031007751938,
+        70.08992248062016,
+        69.14418604651163
+      ],
+      "bounding_box_min_vox": [
+        63.0,
+        64.0,
+        65.0
+      ],
+      "bounding_box_max_vox": [
+        73.0,
+        76.0,
+        73.0
+      ],
+      "bounding_box_size_vox": [
+        11.0,
+        13.0,
+        9.0
+      ],
+      "bounding_box_size_mm": [
+        11.0,
+        13.0,
+        9.0
+      ],
+      "principal_axis_vector_vox": [
+        -0.576632614490669,
+        0.8098757231774497,
+        0.10768537929291228
+      ],
+      "principal_axis_vector_mm": [
+        -0.576632614490669,
+        0.8098757231774497,
+        0.10768537929291228
+      ],
+      "principal_axis_lengths_mm": [
+        12.144445282839223,
+        8.645874801218467,
+        8.501398297784863
+      ],
+      "principal_axis_length_major_mm": 13.268117394265365,
+      "principal_axis_length_minor1_mm": 9.010811185223641,
+      "principal_axis_length_minor2_mm": 8.987820363218574,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 10.71980858984289,
+      "max_diameter_bbox_mm": 13.0,
+      "bbox_volume_mm3": 1287.0,
+      "bbox_fill_fraction": 0.5011655011655012,
+      "flatness": 0.9832895448112153,
+      "aspect_ratio_major_to_minor2": 1.4285232684608598,
+      "elongation_legacy_major_to_minor2": 1.4285232684608598,
+      "elongation": 1.4046519943971085,
+      "secondary_axis_ratio": 0.7119201083177976,
+      "surface_area_mm2": 399.93548583984375,
+      "sphericity": 0.902680361021892,
+      "compactness": 153.76248590192588,
+      "surface_to_volume_ratio": 0.6200550168059593,
+      "roughness_index": 1.1078118492219504,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "304_1_206",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/304_1_206_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 648,
+      "volume_mm3": 648.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 648,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        66.79320987654322,
+        65.96141975308642,
+        67.87654320987654
+      ],
+      "centroid_mm": [
+        66.79320987654322,
+        65.96141975308642,
+        67.87654320987654
+      ],
+      "bounding_box_min_vox": [
+        62.0,
+        60.0,
+        63.0
+      ],
+      "bounding_box_max_vox": [
+        71.0,
+        72.0,
+        73.0
+      ],
+      "bounding_box_size_vox": [
+        10.0,
+        13.0,
+        11.0
+      ],
+      "bounding_box_size_mm": [
+        10.0,
+        13.0,
+        11.0
+      ],
+      "principal_axis_vector_vox": [
+        -0.15763163454370815,
+        -0.7639681608597831,
+        0.6257035376147394
+      ],
+      "principal_axis_vector_mm": [
+        -0.15763163454370815,
+        -0.7639681608597831,
+        0.6257035376147394
+      ],
+      "principal_axis_lengths_mm": [
+        12.086111484030242,
+        8.671926810305445,
+        8.559397962910925
+      ],
+      "principal_axis_length_major_mm": 13.414101070935622,
+      "principal_axis_length_minor1_mm": 9.149205181521587,
+      "principal_axis_length_minor2_mm": 9.067758999533151,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 10.736402747275793,
+      "max_diameter_bbox_mm": 13.0,
+      "bbox_volume_mm3": 1430.0,
+      "bbox_fill_fraction": 0.45314685314685316,
+      "flatness": 0.987023778007352,
+      "aspect_ratio_major_to_minor2": 1.4120282216577689,
+      "elongation_legacy_major_to_minor2": 1.4120282216577689,
+      "elongation": 1.3937054299936535,
+      "secondary_axis_ratio": 0.7175117341722301,
+      "surface_area_mm2": 403.95904541015625,
+      "sphericity": 0.8964583658914643,
+      "compactness": 156.98638903126655,
+      "surface_to_volume_ratio": 0.6233935885959201,
+      "roughness_index": 1.1155007728725592,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "132_0_0",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/132_0_0_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 7674,
+      "volume_mm3": 7674.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 7674,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        110.42572322126661,
+        109.91217096690123,
+        110.36929893145687
+      ],
+      "centroid_mm": [
+        110.42572322126661,
+        109.91217096690123,
+        110.36929893145687
+      ],
+      "bounding_box_min_vox": [
+        98.0,
+        97.0,
+        98.0
+      ],
+      "bounding_box_max_vox": [
+        123.0,
+        124.0,
+        123.0
+      ],
+      "bounding_box_size_vox": [
+        26.0,
+        28.0,
+        26.0
+      ],
+      "bounding_box_size_mm": [
+        26.0,
+        28.0,
+        26.0
+      ],
+      "principal_axis_vector_vox": [
+        -0.5212605881006578,
+        -0.673585770209123,
+        -0.5239939021255294
+      ],
+      "principal_axis_vector_mm": [
+        -0.5212605881006578,
+        -0.673585770209123,
+        -0.5239939021255294
+      ],
+      "principal_axis_lengths_mm": [
+        29.359923210173765,
+        19.10145378712682,
+        19.065143219343184
+      ],
+      "principal_axis_length_major_mm": 33.2645323626799,
+      "principal_axis_length_minor1_mm": 21.174260390370797,
+      "principal_axis_length_minor2_mm": 20.879809403710787,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 24.47227762531871,
+      "max_diameter_bbox_mm": 28.0,
+      "bbox_volume_mm3": 18928.0,
+      "bbox_fill_fraction": 0.40543110735418425,
+      "flatness": 0.9980990678412075,
+      "aspect_ratio_major_to_minor2": 1.5399791584248717,
+      "elongation_legacy_major_to_minor2": 1.5399791584248717,
+      "elongation": 1.5370517625187516,
+      "secondary_axis_ratio": 0.650596176644897,
+      "surface_area_mm2": 2248.80419921875,
+      "sphericity": 0.8366561559054335,
+      "compactness": 193.11292455169553,
+      "surface_to_volume_ratio": 0.2930419858247003,
+      "roughness_index": 1.1952341388294634,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "540_3_1126",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/540_3_1126_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 8893,
+      "volume_mm3": 8893.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 8893,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        111.95873158664118,
+        110.94984819520971,
+        114.90217024626111
+      ],
+      "centroid_mm": [
+        111.95873158664118,
+        110.94984819520971,
+        114.90217024626111
+      ],
+      "bounding_box_min_vox": [
+        101.0,
+        99.0,
+        97.0
+      ],
+      "bounding_box_max_vox": [
+        123.0,
+        123.0,
+        130.0
+      ],
+      "bounding_box_size_vox": [
+        23.0,
+        25.0,
+        34.0
+      ],
+      "bounding_box_size_mm": [
+        23.0,
+        25.0,
+        34.0
+      ],
+      "principal_axis_vector_vox": [
+        0.01753148640869023,
+        0.3488995865512151,
+        -0.936996118182297
+      ],
+      "principal_axis_vector_mm": [
+        0.01753148640869023,
+        0.3488995865512151,
+        -0.936996118182297
+      ],
+      "principal_axis_lengths_mm": [
+        30.88696176288362,
+        20.06679066255901,
+        19.995194659710705
+      ],
+      "principal_axis_length_major_mm": 34.811361811305254,
+      "principal_axis_length_minor1_mm": 22.122618811130337,
+      "principal_axis_length_minor2_mm": 22.05211362022888,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 25.70493776189457,
+      "max_diameter_bbox_mm": 34.0,
+      "bbox_volume_mm3": 19550.0,
+      "bbox_fill_fraction": 0.4548849104859335,
+      "flatness": 0.9964321149279795,
+      "aspect_ratio_major_to_minor2": 1.5447192332225337,
+      "elongation_legacy_major_to_minor2": 1.5447192332225337,
+      "elongation": 1.5392078525298558,
+      "secondary_axis_ratio": 0.6496848351938895,
+      "surface_area_mm2": 2491.668212890625,
+      "sphericity": 0.8330916359019697,
+      "compactness": 195.6023421374374,
+      "surface_to_volume_ratio": 0.2801830892714073,
+      "roughness_index": 1.2003481452761464,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    },
+    {
+      "case_id": "132_1_148",
+      "seg_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks/132_1_148_synthetic_lollipop.nii.gz",
+      "failed": false,
+      "failure_reason": null,
+      "voxel_spacing_mm": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "voxel_volume_mm3": 1.0,
+      "mask_voxel_count": 10057,
+      "volume_mm3": 10057.0,
+      "connected_component_count": 1,
+      "largest_component_voxel_count": 10057,
+      "largest_component_fraction": 1.0,
+      "centroid_vox": [
+        110.3793377746843,
+        108.73341950879984,
+        112.46276225514568
+      ],
+      "centroid_mm": [
+        110.3793377746843,
+        108.73341950879984,
+        112.46276225514568
+      ],
+      "bounding_box_min_vox": [
+        97.0,
+        94.0,
+        101.0
+      ],
+      "bounding_box_max_vox": [
+        123.0,
+        127.0,
+        124.0
+      ],
+      "bounding_box_size_vox": [
+        27.0,
+        34.0,
+        24.0
+      ],
+      "bounding_box_size_mm": [
+        27.0,
+        34.0,
+        24.0
+      ],
+      "principal_axis_vector_vox": [
+        -0.42935832682665326,
+        -0.8938777241616797,
+        0.12897302598665056
+      ],
+      "principal_axis_vector_mm": [
+        -0.4293583268266532,
+        -0.8938777241616795,
+        0.12897302598665053
+      ],
+      "principal_axis_lengths_mm": [
+        31.604012396897183,
+        21.113737269311624,
+        21.05518483645499
+      ],
+      "principal_axis_length_major_mm": 35.766927524881865,
+      "principal_axis_length_minor1_mm": 22.992914307434766,
+      "principal_axis_length_minor2_mm": 22.94281450522748,
+      "principal_axis_sign_aligned": false,
+      "equivalent_sphere_diameter_mm": 26.780783335687033,
+      "max_diameter_bbox_mm": 34.0,
+      "bbox_volume_mm3": 22032.0,
+      "bbox_fill_fraction": 0.45647240377632536,
+      "flatness": 0.9972268086833809,
+      "aspect_ratio_major_to_minor2": 1.501008546938896,
+      "elongation_legacy_major_to_minor2": 1.501008546938896,
+      "elongation": 1.496845963070354,
+      "secondary_axis_ratio": 0.6680714146088782,
+      "surface_area_mm2": 2681.9404296875,
+      "sphericity": 0.8401315557855383,
+      "compactness": 190.72625506244523,
+      "surface_to_volume_ratio": 0.26667400116212586,
+      "roughness_index": 1.190289774397275,
+      "component_volume_fraction_largest": 1.0,
+      "component_volume_fraction_second_largest": 0.0,
+      "empty_mask": false,
+      "multiple_components": false,
+      "tiny_component_fraction": false,
+      "surface_area_failed": false,
+      "principal_axis_failed": false
+    }
+  ],
+  "failed": [],
+  "summary": {
+    "n_cases": 12,
+    "n_successful": 12,
+    "n_failed": 0,
+    "n_empty_mask": 0,
+    "n_multiple_components": 0,
+    "n_surface_area_failed": 0,
+    "n_principal_axis_failed": 0,
+    "volume_mm3": {
+      "mean": 2370.6666666666665,
+      "median": 193.5,
+      "std": 3792.70076008582,
+      "min": 8.0,
+      "max": 10057.0,
+      "q25": 11.25,
+      "q75": 2404.5
+    },
+    "surface_area_mm2": {
+      "mean": 729.9171724319458,
+      "median": 170.19341278076172,
+      "std": 1019.2349409922211,
+      "min": 17.68483543395996,
+      "max": 2681.9404296875,
+      "q25": 23.061448097229004,
+      "q75": 865.1703338623047
+    },
+    "sphericity": {
+      "mean": 0.9535188205373036,
+      "median": 0.9353194761146355,
+      "std": 0.09427854784781169,
+      "min": 0.8330916359019697,
+      "max": 1.09381303096843,
+      "q25": 0.8823766633649828,
+      "q75": 1.052432882611025
+    },
+    "elongation": {
+      "mean": 1.3166421750588997,
+      "median": 1.3001066423673588,
+      "std": 0.15093172768381444,
+      "min": 1.1233113653127969,
+      "max": 1.5392078525298558,
+      "q25": 1.19006295346081,
+      "q75": 1.42770048656542
+    },
+    "flatness": {
+      "mean": 0.952282411627743,
+      "median": 0.9851566614092837,
+      "std": 0.0641115810241662,
+      "min": 0.8164965809277259,
+      "max": 1.0,
+      "q25": 0.9426586875373896,
+      "q75": 0.9966307883668298
+    },
+    "aspect_ratio_major_to_minor2": {
+      "mean": 1.3831271534723406,
+      "median": 1.4202757450593144,
+      "std": 0.12883777964014403,
+      "min": 1.178353962454935,
+      "max": 1.5447192332225337,
+      "q25": 1.2349209393356158,
+      "q75": 1.479222245025705
+    },
+    "bbox_fill_fraction": {
+      "mean": 0.4520449941139959,
+      "median": 0.4540158818163933,
+      "std": 0.09544427556287714,
+      "min": 0.2962962962962963,
+      "max": 0.6055555555555555,
+      "q25": 0.3874066638489715,
+      "q75": 0.5137709512709513
+    },
+    "surface_to_volume_ratio": {
+      "mean": 1.1298003250734099,
+      "median": 0.9299960342889825,
+      "std": 0.7574608010874152,
+      "min": 0.26667400116212586,
+      "max": 2.210604429244995,
+      "q25": 0.5383017590606446,
+      "q75": 2.0567881796095104
+    },
+    "tiny_component_fraction_threshold": 0.8
+  }
+}

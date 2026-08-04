@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-07-18T12:57:02.486985+00:00",
+  "git_commit": "b7db1cc55f708ed71f4a9b11da1aef5cc27e3f5e",
+  "manifest_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/manifests/synthetic_lollipop_manifest.csv",
+  "compartment_features_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/analysis/anatomical_compartment_validation/synthetic_compartment_features.csv",
+  "selected_cases": [
+    "439_0_0",
+    "664_0_0",
+    "611_2_466",
+    "527_3_625",
+    "126_5_1607",
+    "527_2_591",
+    "577_1_239",
+    "579_1_198",
+    "560_1_146",
+    "690_0_0"
+  ],
+  "case_count": 10
+}

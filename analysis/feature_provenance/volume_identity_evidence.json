@@ -1,0 +1,8 @@
+{
+  "cases_compared": 261,
+  "local_volume_equals_manifest_realized": 261,
+  "pulled_volume_equals_manifest_realized": 9,
+  "pulled_volume_equals_local_volume": 9,
+  "median_abs_pulled_minus_local_volume": 8.0,
+  "max_abs_pulled_minus_local_volume": 211.0
+}

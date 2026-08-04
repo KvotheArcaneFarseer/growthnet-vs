@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-07-18T12:32:51.240238+00:00",
+  "git_commit": "b7db1cc55f708ed71f4a9b11da1aef5cc27e3f5e",
+  "extractor_path": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/scripts/extract_real_tumor_features.py",
+  "extractor_sha256": "681fc273340f1a5f9e696df341a270feea8ab6ab115402bbb625717144e72e93",
+  "synthetic_features": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/analysis/synthetic_features_v2/synthetic_features_v2.csv",
+  "real_features": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/real_tumor_features_v1/real_tumor_features_usable_train.csv",
+  "mask_root": "/Users/kvothearcane/Personal/Coding Projects/GrowthNet/rivanna_pull/analysis/synthetic_lollipop_v1/masks",
+  "conditions": {
+    "native_1p0_iso": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "real_like_0p5_iso": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "anisotropic_0p5_0p5_1p0": [
+      0.5,
+      0.5,
+      1.0
+    ]
+  },
+  "selected_case_count": 30,
+  "validation": {
+    "selected_cases": 30,
+    "empty_resampled_masks": 0,
+    "source_masks_missing": 0,
+    "max_volume_error_fraction": 0.0
+  }
+}

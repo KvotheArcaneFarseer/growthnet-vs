@@ -1,0 +1,13 @@
+case_id,volume_bin,bulb_fraction,stem_fraction,unassigned_fraction,unassigned_boundary_fraction,classification,reason,overlay_path
+95_1_182,small_<100,0.0,1.0,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/95_1_182_v2_overlay.png
+57_1_208,small_<100,0.0,1.0,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/57_1_208_v2_overlay.png
+439_0_0,small_<100,0.0,1.0,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/439_0_0_v2_overlay.png
+235_0_0,small_<100,0.0,1.0,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/235_0_0_v2_overlay.png
+664_1_175,medium_100_1000,0.0,1.0,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/664_1_175_v2_overlay.png
+478_1_378,medium_100_1000,0.0030959752321981426,0.9969040247678018,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/478_1_378_v2_overlay.png
+537_1_110,medium_100_1000,0.008528784648187633,0.9914712153518124,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/537_1_110_v2_overlay.png
+126_4_1231,medium_100_1000,0.03274853801169591,0.9672514619883041,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/126_4_1231_v2_overlay.png
+132_2_232,large_>=1000,0.03188833408987744,0.9678847026781662,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/132_2_232_v2_overlay.png
+647_2_176,large_>=1000,0.0384172109104879,0.9615827890895121,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/647_2_176_v2_overlay.png
+606_0_0,large_>=1000,0.04336399474375821,0.9566360052562418,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/606_0_0_v2_overlay.png
+74_2_1367,large_>=1000,0.03125,0.96875,0.0,0.0,MAPPING_CONFIRMED,compartments cover >99% of saved mask voxels,analysis/anatomical_compartment_validation_v2/overlays/74_2_1367_v2_overlay.png

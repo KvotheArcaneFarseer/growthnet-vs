@@ -123,5 +123,11 @@ analysis/clinical_growth_law_validation/variant_smoke_timeline.csv
 analysis/clinical_growth_law_validation/variant_smoke_backgrounds.csv
 analysis/clinical_growth_law_validation/variant_smoke_output/
 
+# Local plotting/font cache artifacts
+**/.matplotlib-cache/
+**/.mplconfig/
+*.cache-*
+fontlist-v*.json
+
 !projects/vivit/src/data/synthetic.py
 .gitnexus
